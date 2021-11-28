@@ -182,13 +182,16 @@ def check_streming(browser, watch_url, check_refresh_interval):
     browser.get(watch_url)
     browser.implicitly_wait(int(check_refresh_interval // 2))
     time.sleep(int(check_refresh_interval // 5))
-    page_html = browser.find_element(By.ID, "live-wrapper").get_attribute("outerHTML")
-    soup = BeautifulSoup(page_html, 'lxml')
-    nolive_recommend_lasttime = re.search('<div class="nolive-recommend-lasttime">上次直播时间.+?前</div>', str(soup))
-    already_freshed = soup.find('div', {'class', 'ccplayer-showEnterRoom1'})
-    if already_freshed and not nolive_recommend_lasttime:
-        return True
-    else:
+    try:
+        page_html = browser.find_element(By.ID, "live-wrapper").get_attribute("outerHTML")
+        soup = BeautifulSoup(page_html, 'lxml')
+        nolive_recommend_lasttime = re.search('<div class="nolive-recommend-lasttime">上次直播时间.+?前</div>', str(soup))
+        already_freshed = soup.find('div', {'class', 'ccplayer-showEnterRoom'})
+        if already_freshed and not nolive_recommend_lasttime:
+            return True
+        else:
+            return False
+    except:
         return False
 
 def main(
