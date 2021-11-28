@@ -26,7 +26,7 @@
         </div> -->
       </div>
       <div class="px-2" style="width:1900px;height:900px" id="main-chart">
-        <div class="chart-container" id="24f502431a924740adf7ff9aa2e21e04" style="width:1900px; height:900px;"></div>
+        <div class="chart-container" id="8eed0a40d55042fbbbf3c6ba26d84abf" style="width:1900px; height:900px;"></div>
       </div>
       <div class="flex-initial flex flex-row justify-center pt-2 pl-2 mt-8 ml-2 mb-2">
         <div class="flex-none w-40 items-center pt-1" id='pata-n-ao'><h1 class="font-extrabold text-2xl text-gray-900">高能时间统计</h1></div>
@@ -574,9 +574,9 @@
       }
     </script>
     <script>
-        var chart_24f502431a924740adf7ff9aa2e21e04 = echarts.init(
-            document.getElementById('24f502431a924740adf7ff9aa2e21e04'), 'light', {renderer: 'canvas'});
-        var option_24f502431a924740adf7ff9aa2e21e04 = {
+        var chart_8eed0a40d55042fbbbf3c6ba26d84abf = echarts.init(
+            document.getElementById('8eed0a40d55042fbbbf3c6ba26d84abf'), 'light', {renderer: 'canvas'});
+        var option_8eed0a40d55042fbbbf3c6ba26d84abf = {
     "animation": true,
     "animationThreshold": 2000,
     "animationDuration": 1000,
@@ -596,6 +596,7 @@
             "symbolSize": 4,
             "showSymbol": true,
             "smooth": false,
+            "clip": true,
             "step": false,
             "data": [
                 [
@@ -11313,6 +11314,7 @@
             "symbolSize": 4,
             "showSymbol": true,
             "smooth": false,
+            "clip": true,
             "step": false,
             "data": [
                 [
@@ -22062,10 +22064,15 @@
         "axisPointer": {
             "type": "line"
         },
+        "showContent": true,
+        "alwaysShowContent": false,
+        "showDelay": 0,
+        "hideDelay": 100,
         "textStyle": {
             "fontSize": 14
         },
-        "borderWidth": 0
+        "borderWidth": 0,
+        "padding": 5
     },
     "xAxis": [
         {
@@ -24801,7 +24808,8 @@
             "start": 0,
             "end": 100,
             "orient": "horizontal",
-            "zoomLock": false
+            "zoomLock": false,
+            "filterMode": "filter"
         },
         {
             "show": true,
@@ -24810,18 +24818,25 @@
             "start": 0,
             "end": 100,
             "orient": "horizontal",
-            "zoomLock": false
+            "zoomLock": false,
+            "filterMode": "filter"
         }
     ],
     "grid": [
         {
+            "show": false,
+            "zlevel": 0,
+            "z": 2,
             "left": "4%",
             "right": "4%",
-            "containLabel": false
+            "containLabel": false,
+            "backgroundColor": "transparent",
+            "borderColor": "#ccc",
+            "borderWidth": 1
         }
     ]
 };
-        chart_24f502431a924740adf7ff9aa2e21e04.setOption(option_24f502431a924740adf7ff9aa2e21e04);
+        chart_8eed0a40d55042fbbbf3c6ba26d84abf.setOption(option_8eed0a40d55042fbbbf3c6ba26d84abf);
     </script>
   </body>
 </html>
