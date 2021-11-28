@@ -106,21 +106,21 @@ def main():
         src_files = src_files[2] | Filter(lambda x:x[:5] == 'danmu' and os.path.splitext(x)[1] == '.txt') | Map(lambda x: os.path.splitext(x)[0]) | set 
         break
     dst_files = []
-    for dst_files in os.walk(dst_dir):
-        dst_files = dst_files[2] | Filter(lambda x:x[:5] == 'danmu' and os.path.splitext(x)[1] == '.html') | Map(lambda x: os.path.splitext(x)[0]) | set 
-        break
+    # for dst_files in os.walk(dst_dir):
+    #     dst_files = dst_files[2] | Filter(lambda x:x[:5] == 'danmu' and os.path.splitext(x)[1] == '.html') | Map(lambda x: os.path.splitext(x)[0]) | set 
+    #     break
 
     diff_files = sorted(src_files.difference(dst_files) | Map(lambda x:x+'.txt') | list)
     drop_list = []
     for file_name in diff_files:
         file_path = os.path.join(src_dir, file_name)
-        text = Read(file_path).split('\n')
-        text_backup = text[min(len(text) - 1, 6):] | Map(lambda x: (datetime.datetime.strptime(x[:19], '%Y-%m-%d %H:%M:%S'), x[22:])) | list 
+        text = Read(file_path).split('\n') | Filter(lambda x:x.strip() != '') | list
         st_time = datetime.datetime.strptime(text[3], '%Y-%m-%d %H:%M:%S')
-        if len(text) <= 11:
+        if len(text) <= 10:
             drop_list.append(file_path)
             continue
-        text = text[min(len(text) - 1, 6):] | Map(lambda x: (datetime.datetime.strptime(x[:19], '%Y-%m-%d %H:%M:%S') - st_time).total_seconds()) | list
+        text_backup = text[min(len(text) - 1, 5):] | Map(lambda x: (datetime.datetime.strptime(x[:19], '%Y-%m-%d %H:%M:%S'), x[22:])) | list 
+        text = text[min(len(text) - 1, 5):] | Map(lambda x: (datetime.datetime.strptime(x[:19], '%Y-%m-%d %H:%M:%S') - st_time).total_seconds()) | list
         cmt_length = len(text)
         time_length = text[-1] - text[0]
         avg_cmt = round(cmt_length / (time_length / 60),2)
@@ -180,6 +180,28 @@ def main():
                 
             last_status2 = tab[idx] >= avg2
             x_axis.append(f"{str(int(idx*5//3600)).zfill(2)}:{str(int((((idx*5)%3600)//60))).zfill(2)}:{str(int(((idx*5)%60))).zfill(2)}")
+
+        if len(ptao) < 15:
+            # 降准
+            avg3 = round(sum(tab) / len(tab) * 2.5, 2)
+            ptao = []
+            cmt_cur = 0
+            last_status3 = tab[0] >= avg3
+            for idx in range(1, len(tab)):
+                if tab[idx] > avg3 and not last_status3:
+                    _buffer = ''
+                    while cmt_cur < len(text_backup) and len(_buffer) < max_cmt_l:
+                        if text_backup[cmt_cur][0] >= (st_time + datetime.timedelta(seconds = idx*5+5)):
+                            if _buffer == '':
+                                _buffer += f'{text_backup[cmt_cur][1]}'
+                            else:
+                                _buffer += f', {text_backup[cmt_cur][1]}'
+                        cmt_cur += 1
+                    _buffer = _buffer[:max_cmt_l] + '...'
+                    ptao.append((f"{str(int(idx*5//3600)).zfill(2)}:{str(int((((idx*5)%3600)//60))).zfill(2)}:{str(int(((idx*5)%60))).zfill(2)}", str(st_time + datetime.timedelta(seconds = idx*5)), tab[idx], _buffer))
+                last_status3 = tab[idx] >= avg3
+
+
         chart_html = render(x_axis,  yll,  ylh,  avg, cmt_length, time_length, avg_cmt, file_name).render_embed()
         chart_soup = BeautifulSoup(chart_html, 'lxml')
         chart_head = chart_soup.find_all('script')[0]
