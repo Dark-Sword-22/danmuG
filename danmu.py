@@ -252,5 +252,5 @@ main(
     watch_url = watch_url,
     refresh_interval = 0.2,
     check_refresh_interval = 30,
-    close_threshold = 600,
+    close_threshold = 100,
 )
