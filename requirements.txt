@@ -1,0 +1,5 @@
+loguru==0.5.3
+lxml==4.6.4
+beautifulsoup4==4.10.0
+pipeit>=0.1.5
+selenium==4.1.0
