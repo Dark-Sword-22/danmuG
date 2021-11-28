@@ -120,6 +120,7 @@ def git_push():
     logger.debug("Git pushed")
     
 def git_pull():
+    os.system("git checkout .")
     os.system("git pull")
     logger.debug("Git pulled")
 

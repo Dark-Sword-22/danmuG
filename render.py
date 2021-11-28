@@ -240,6 +240,7 @@ def main():
         cmt_length = max(len(Read(source_path).split('\n')) - 6, 0)
         file_create_time = datetime.datetime.strptime(file_name[6:6+19], '%Y-%m-%d-%H-%M-%S')
         fl.append((file_url, file_html, file_create_time, file_size, cmt_length))
+    fl.sort(key = lambda x:x[2], reverse = True)
     index_html = jinja22(fl)
     Write(os.path.join(dst_dir, 'index.html'), index_html)
 
