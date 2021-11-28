@@ -13,7 +13,7 @@
       }
     </style> 
   <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
-  <script src="https://assets.pyecharts.org/assets/echarts.min.js" type="text/javascript"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@4.9.0/dist/echarts.min.js" type="text/javascript"></script>
   </head>
   <body style="margin:0;padding:0">
     <div class="flex flex-col">
@@ -26,7 +26,7 @@
         </div> -->
       </div>
       <div class="px-2" style="width:1900px;height:900px" id="main-chart">
-        <div class="chart-container" id="e3db33beda864de183898ed500475f8b" style="width:1900px; height:900px;"></div>
+        <div class="chart-container" id="277d1d840e2b48e9badfeac357cac57c" style="width:1900px; height:900px;"></div>
       </div>
       <div class="flex-initial flex flex-row justify-center pt-2 pl-2 mt-8 ml-2 mb-2">
         <div class="flex-none w-40 items-center pt-1" id='pata-n-ao'><h1 class="font-extrabold text-2xl text-gray-900">高能时间统计</h1></div>
@@ -634,9 +634,9 @@
       }
     </script>
     <script>
-        var chart_e3db33beda864de183898ed500475f8b = echarts.init(
-            document.getElementById('e3db33beda864de183898ed500475f8b'), 'light', {renderer: 'canvas'});
-        var option_e3db33beda864de183898ed500475f8b = {
+        var chart_277d1d840e2b48e9badfeac357cac57c = echarts.init(
+            document.getElementById('277d1d840e2b48e9badfeac357cac57c'), 'light', {renderer: 'canvas'});
+        var option_277d1d840e2b48e9badfeac357cac57c = {
     "animation": true,
     "animationThreshold": 2000,
     "animationDuration": 1000,
@@ -656,7 +656,6 @@
             "symbolSize": 4,
             "showSymbol": true,
             "smooth": false,
-            "clip": true,
             "step": false,
             "data": [
                 [
@@ -14642,7 +14641,6 @@
             "symbolSize": 4,
             "showSymbol": true,
             "smooth": false,
-            "clip": true,
             "step": false,
             "data": [
                 [
@@ -28660,15 +28658,10 @@
         "axisPointer": {
             "type": "line"
         },
-        "showContent": true,
-        "alwaysShowContent": false,
-        "showDelay": 0,
-        "hideDelay": 100,
         "textStyle": {
             "fontSize": 14
         },
-        "borderWidth": 0,
-        "padding": 5
+        "borderWidth": 0
     },
     "xAxis": [
         {
@@ -32221,8 +32214,7 @@
             "start": 0,
             "end": 100,
             "orient": "horizontal",
-            "zoomLock": false,
-            "filterMode": "filter"
+            "zoomLock": false
         },
         {
             "show": true,
@@ -32231,25 +32223,18 @@
             "start": 0,
             "end": 100,
             "orient": "horizontal",
-            "zoomLock": false,
-            "filterMode": "filter"
+            "zoomLock": false
         }
     ],
     "grid": [
         {
-            "show": false,
-            "zlevel": 0,
-            "z": 2,
             "left": "4%",
             "right": "4%",
-            "containLabel": false,
-            "backgroundColor": "transparent",
-            "borderColor": "#ccc",
-            "borderWidth": 1
+            "containLabel": false
         }
     ]
 };
-        chart_e3db33beda864de183898ed500475f8b.setOption(option_e3db33beda864de183898ed500475f8b);
+        chart_277d1d840e2b48e9badfeac357cac57c.setOption(option_277d1d840e2b48e9badfeac357cac57c);
     </script>
   </body>
 </html>

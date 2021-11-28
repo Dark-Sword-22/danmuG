@@ -204,7 +204,7 @@ def main():
 
         chart_html = render(x_axis,  yll,  ylh,  avg, cmt_length, time_length, avg_cmt, file_name).render_embed()
         chart_soup = BeautifulSoup(chart_html, 'lxml')
-        chart_head = chart_soup.find_all('script')[0]
+        chart_head = str(chart_soup.find_all('script')[0]).replace('https://assets.pyecharts.org/assets/echarts.min.js','https://cdn.jsdelivr.net/npm/echarts@4.9.0/dist/echarts.min.js')
         chart_div = chart_soup.find('div')
         chart_script = chart_soup.find_all('script')[-1]
         
