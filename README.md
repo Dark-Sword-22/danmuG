@@ -1,4 +1,4 @@
-# quin_danmu
+# danmuG
 秦川弹幕机器人
 
 ## 功能说明
