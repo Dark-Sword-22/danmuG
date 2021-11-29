@@ -34,6 +34,9 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         python -m pip install pipeit pyecharts==1.9.1 beautifulsoup4 lxml 
+    - name: Regex filter
+      run: |
+        python cmt_filter.py
     - name: Render HTML
       run: |
         python render.py
