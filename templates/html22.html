@@ -68,11 +68,14 @@
       let pos_y = 0
       document.onmousemove = (e) => {
         pos_x = e.pageX;
-        pos_y = e.pageY
+        pos_y = e.pageY;
       }
 
       window.onload = () => {
         let flag1 = true
+        let e = event || window.event;
+        pos_x = e.pageX;
+        pos_y = e.pageY;
         document.getElementById('plus1s').onclick = () => {
           if (flag1) {
             flag1 = false
