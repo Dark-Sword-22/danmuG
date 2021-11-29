@@ -6,9 +6,13 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <style type="text/css"> 
     </style> 
-  <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
   </head>
   <body style="margin:0;padding:0">
+    <div class="absolute w-screen h-screen" style="pointer-events: none;">
+      <div id="plus22s" class="bg-green-500 w-10 text-gray-100 text-xs px-1.5 rounded absolute animate__animated" style="opacity:0.9;display:none;top:10px;left:20px">+22</div>
+    </div>
     <div class="flex flex-col w-full">
       <div class="flex-initial pl-4 pb-4 pt-4">
         <a href='https://github.com/Dark-Sword-22/danmuG'><h1 class="font-extrabold text-2xl">秦国弹幕姬</h1></a>
@@ -44,7 +48,8 @@
       </div>
       <div class="flex-none ml-4 flex flex-row-reverse mt-2" id="tail" style="width:300px;opacity:0">
         <div class="pt-0.5">
-          <a href="/danmuG/">
+          <!-- <a href="/danmuG/"> -->
+          <a href="#" id="plus1s">
             <img src="https://visitor-badge.glitch.me/badge?page_id=darksword22.danmuG&left_color=red&right_color=green&left_text=Dark%20Sword">
           </a>
         </div>
@@ -58,6 +63,28 @@
       let tail_div =  document.getElementById("tail")
       tail_div.style.width=tab_div.offsetWidth+"px";
       tail_div.style.opacity=1
+
+      let pos_x = 0
+      let pos_y = 0
+      document.onmousemove = (e) => {
+        pos_x = e.pageX;
+        pos_y = e.pageY
+      }
+
+      window.onload = () => {
+        let flag1 = true
+        document.getElementById('plus1s').onclick = () => {
+          if (flag1) {
+            flag1 = false
+            let ele = document.getElementById('plus22s')
+            ele.style.top = pos_y-15 + 'px'
+            ele.style.left = pos_x-18 + 'px'
+            ele.style.display = 'block'
+            ele.classList.add("animate__fadeOutUp")
+            setTimeout(()=>{flag1 = true;location.reload()}, 300);
+          }
+        }
+      }
     </script>
   </body>
 </html>
