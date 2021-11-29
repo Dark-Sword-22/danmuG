@@ -73,14 +73,19 @@
 
       window.onload = () => {
         let flag1 = true
-        document.getElementById('plus1s').onclick = () => {
+        let ele1 = document.getElementById('plus1s')
+        let ele22 = document.getElementById('plus22s')
+        ele1.onclick = () => {
           if (flag1) {
             flag1 = false
-            let ele = document.getElementById('plus22s')
-            ele.style.top = pos_y-15 + 'px'
-            ele.style.left = pos_x-18 + 'px'
-            ele.style.display = 'block'
-            ele.classList.add("animate__fadeOutUp")
+            ele22.style.top = pos_y-15 + 'px'
+            ele22.style.left = pos_x-18 + 'px'
+            if (pos_x === 0 || pos_y === 0) {
+              ele22.style.top = ele1.offsetTop-10 + 'px';
+              ele22.style.left = ele1.offsetLeft+30 + 'px';
+            }
+            ele22.style.display = 'block'
+            ele22.classList.add("animate__fadeOutUp")
             setTimeout(()=>{flag1 = true;location.reload()}, 300);
           }
         }
