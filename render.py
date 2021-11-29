@@ -106,9 +106,9 @@ def main():
         src_files = src_files[2] | Filter(lambda x:x[:5] == 'danmu' and os.path.splitext(x)[1] == '.txt') | Map(lambda x: os.path.splitext(x)[0]) | set 
         break
     dst_files = []
-    # for dst_files in os.walk(dst_dir):
-    #     dst_files = dst_files[2] | Filter(lambda x:x[:5] == 'danmu' and os.path.splitext(x)[1] == '.html') | Map(lambda x: os.path.splitext(x)[0]) | set 
-    #     break
+    for dst_files in os.walk(dst_dir):
+        dst_files = dst_files[2] | Filter(lambda x:x[:5] == 'danmu' and os.path.splitext(x)[1] == '.html') | Map(lambda x: os.path.splitext(x)[0]) | set 
+        break
 
     diff_files = sorted(src_files.difference(dst_files) | Map(lambda x:x+'.txt') | list)
     drop_list = []
