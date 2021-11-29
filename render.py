@@ -176,7 +176,8 @@ def main():
                             _buffer += f', {text_backup[cmt_cur][1]}'
                     cmt_cur += 1
                 _buffer = _buffer[:max_cmt_l] + '...'
-                ptao.append((f"{str(int(idx*5//3600)).zfill(2)}:{str(int((((idx*5)%3600)//60))).zfill(2)}:{str(int(((idx*5)%60))).zfill(2)}", str(st_time + datetime.timedelta(seconds = idx*5)), tab[idx], _buffer))
+                cmt_max = max(tab[idx-1:min(idx+6, len(tab))])
+                ptao.append((f"{str(int(idx*5//3600)).zfill(2)}:{str(int((((idx*5)%3600)//60))).zfill(2)}:{str(int(((idx*5)%60))).zfill(2)}", str(st_time + datetime.timedelta(seconds = idx*5)), cmt_max, _buffer))
                 
             last_status2 = tab[idx] >= avg2
             x_axis.append(f"{str(int(idx*5//3600)).zfill(2)}:{str(int((((idx*5)%3600)//60))).zfill(2)}:{str(int(((idx*5)%60))).zfill(2)}")
@@ -198,7 +199,8 @@ def main():
                                 _buffer += f', {text_backup[cmt_cur][1]}'
                         cmt_cur += 1
                     _buffer = _buffer[:max_cmt_l] + '...'
-                    ptao.append((f"{str(int(idx*5//3600)).zfill(2)}:{str(int((((idx*5)%3600)//60))).zfill(2)}:{str(int(((idx*5)%60))).zfill(2)}", str(st_time + datetime.timedelta(seconds = idx*5)), tab[idx], _buffer))
+                    cmt_max = max(tab[idx-1:min(idx+6, len(tab))])
+                    ptao.append((f"{str(int(idx*5//3600)).zfill(2)}:{str(int((((idx*5)%3600)//60))).zfill(2)}:{str(int(((idx*5)%60))).zfill(2)}", str(st_time + datetime.timedelta(seconds = idx*5)), cmt_max, _buffer))
                 last_status3 = tab[idx] >= avg3
 
 
