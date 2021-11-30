@@ -21,7 +21,7 @@ class MQueue(asyncio.Queue):
 
 class Writer:
 
-    def __init__(self, watch_url, title, logger, activate_interval = 100):
+    def __init__(self, watch_url, title, logger, activate_interval = 10):
         '''
         弹幕姬版本: 0.1.0
         直播来源地址: ...
@@ -63,7 +63,8 @@ class Writer:
                 return 
 
 def git_push(logger):
-    return
+    print('upd',logger)
+    return 
     os.system("git add -A")
     os.system('git commit -m "弹幕更新"')
     os.system("git push")
@@ -71,7 +72,8 @@ def git_push(logger):
     
 
 def git_pull(logger):
-    return 
+    print("pull",logger)
+    return
     os.system("git checkout .")
     os.system("git pull")
     logger.debug("Git pulled")
@@ -135,11 +137,11 @@ async def main(logger):
         watch_url = 'https://cc.163.com/361433/'
 
     loop = asyncio.get_running_loop()
+    watch_url = 'https://cc.163.com/980315/'
     q = MQueue()
     SLEEP_INTERVAL = 6
 
     while True:
-        logger.debug("New loop - MAIN")
         dmc = danmaku.DanmakuClient(watch_url, q)
         handler_task = loop.create_task(message_hanlder(q, logger, watch_url, dmc))
         try:
@@ -157,8 +159,8 @@ async def main(logger):
             logger.info("检测到直播间未开播")
             await asyncio.sleep(SLEEP_INTERVAL)
         except Exception as e:
-            # ...
-            raise
+            ...
+            #raise
         finally:
             await q.cls()
 
