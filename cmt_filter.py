@@ -23,5 +23,3 @@ for file_name in files:
             text = text[:scaned.start()] + text[scaned.end():]
             scaned = pat.search(text)
     Write(file_path, text)
-
-     #我似冲哥  我似冲哥#  #比如韦天#  #韦天装甲#  #我似韦天#  #韦天动力装甲#  #韦天之诅咒# 
