@@ -79,14 +79,17 @@ def train_nlp_model(src_dir, file_name, passes = 5, file_count = 3):
     index = similarities.SparseMatrixSimilarity(lda[bow_corpus], num_features=120)
     return processed_corpus, lda, index, dictionary
 
-def string_query(string, processed_corpus, model, index, dictionary):
+def string_query(string, require_num, taged, processed_corpus, model, index, dictionary):
     query_bow = dictionary.doc2bow(split_string(string))
     sims = index[model[query_bow]]
-    sims_top = sorted(enumerate(sims), key=lambda x: x[1], reverse=True)[:10]
-    if len(sims_top) < 10:
+    sims_top = sorted(enumerate(sims), key=lambda x: x[1], reverse=True)[:require_num * 2]
+    if len(sims_top) < require_num * 2:
         raise 
     documents_top = [processed_corpus[document_number][1] for document_number, score in sims_top]
     res = list(set(documents_top))
     res.sort(key = documents_top.index)
-    res = ' '.join(res[:6] | Map(lambda x:f"#{x}#"))
+    if taged:
+        res = ' '.join(res[:require_num] | Map(lambda x:f"#{x}#"))
+    else:
+        res = ', '.join(res[:require_num] | Map(lambda x:f"#{x}"))
     return res

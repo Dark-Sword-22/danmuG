@@ -178,15 +178,18 @@ def main():
                     ylh[-1] = tab[idx]
             last_status = tab[idx] >= avg
             if tab[idx] > avg2 and not last_status2:
-                _buffer = ''
-                while cmt_cur < len(text_backup) and len(_buffer) < max_cmt_l:
-                    if text_backup[cmt_cur][0] >= (st_time + datetime.timedelta(seconds = idx*5+5)):
-                        if _buffer == '':
-                            _buffer += f'{text_backup[cmt_cur][1]}'
-                        else:
-                            _buffer += f', {text_backup[cmt_cur][1]}'
-                    cmt_cur += 1
-                _buffer = _buffer[:max_cmt_l] + '...'
+                tmp_cmt_stack = []
+                converted_time_range = (st_time + datetime.timedelta(seconds = (idx-3) * 5), st_time + datetime.timedelta(seconds = (idx+8) * 5))
+                cmt_cur = 0
+                while cmt_cur<len(text_backup) and text_backup[cmt_cur][0] <= converted_time_range[1]:
+                    if converted_time_range[0] <= text_backup[cmt_cur][0]:
+                        tmp_cmt_stack.append(text_backup[cmt_cur][1])
+                    cmt_cur+=1
+                _buffer = '，'.join(tmp_cmt_stack)
+                _buffer = string_query(_buffer, 10, False, processed_corpus, lda, index, dictionary)
+
+                if len(_buffer) >= max_cmt_l:
+                    _buffer = _buffer[:max_cmt_l] + '...'
                 cmt_max = max(tab[idx-1:min(idx+6, len(tab))])
                 ptao.append((f"{str(int(idx*5//3600)).zfill(2)}:{str(int((((idx*5)%3600)//60))).zfill(2)}:{str(int(((idx*5)%60))).zfill(2)}", str(st_time + datetime.timedelta(seconds = idx*5)), cmt_max, _buffer))
                 
@@ -201,15 +204,19 @@ def main():
             last_status3 = tab[0] >= avg3
             for idx in range(1, len(tab)):
                 if tab[idx] > avg3 and not last_status3:
-                    _buffer = ''
-                    while cmt_cur < len(text_backup) and len(_buffer) < max_cmt_l:
-                        if text_backup[cmt_cur][0] >= (st_time + datetime.timedelta(seconds = idx*5+5)):
-                            if _buffer == '':
-                                _buffer += f'{text_backup[cmt_cur][1]}'
-                            else:
-                                _buffer += f', {text_backup[cmt_cur][1]}'
-                        cmt_cur += 1
-                    _buffer = _buffer[:max_cmt_l] + '...'
+                    tmp_cmt_stack = []
+                    converted_time_range = (st_time + datetime.timedelta(seconds = (idx-3) * 5), st_time + datetime.timedelta(seconds = (idx+8) * 5))
+                    cmt_cur = 0
+                    while cmt_cur<len(text_backup) and text_backup[cmt_cur][0] <= converted_time_range[1]:
+                        if converted_time_range[0] <= text_backup[cmt_cur][0]:
+                            tmp_cmt_stack.append(text_backup[cmt_cur][1])
+                        cmt_cur+=1
+                    _buffer = '，'.join(tmp_cmt_stack)
+                    _buffer = string_query(_buffer, 10, False, processed_corpus, lda, index, dictionary)
+
+                    if len(_buffer) >= max_cmt_l:
+                        _buffer = _buffer[:max_cmt_l] + '...'
+                    
                     cmt_max = max(tab[idx-1:min(idx+6, len(tab))])
                     ptao.append((f"{str(int(idx*5//3600)).zfill(2)}:{str(int((((idx*5)%3600)//60))).zfill(2)}:{str(int(((idx*5)%60))).zfill(2)}", str(st_time + datetime.timedelta(seconds = idx*5)), cmt_max, _buffer))
                 last_status3 = tab[idx] >= avg3
@@ -247,7 +254,7 @@ def main():
                             content_lst.append(text_backup[cmt_cur][1])
                         cmt_cur += 1
                     content = '，'.join(content_lst)
-                    tags = string_query(content, processed_corpus, lda, index, dictionary)
+                    tags = string_query(content, 6, True, processed_corpus, lda, index, dictionary)
                     seconds = cidx * 5
                     tag_res.append((tags,(int(seconds // 3600), int((seconds%3600) // 60), int(seconds%60))))
 
