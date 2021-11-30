@@ -127,7 +127,7 @@ def main():
         '''
         理论上应该是公用同一字典即可学习，但是测试了一下发现效果居然受语料库输入顺序影响，也是搞不太清楚为什么
         '''
-        processed_corpus, lda, index, dictionary = train_nlp_model(src_dir, file_name, passes = 1, file_count = 1)
+        processed_corpus, lda, index, dictionary = train_nlp_model(src_dir, file_name, passes = 5, file_count = 1)
 
 
         text_backup = text[min(len(text) - 1, 5):] | Map(lambda x: (datetime.datetime.strptime(x[:19], '%Y-%m-%d %H:%M:%S'), x[22:])) | list 

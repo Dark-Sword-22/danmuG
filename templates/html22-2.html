@@ -92,17 +92,23 @@
           </div>
         </div>
         <div class="mt-8 ml-3 tracking-wide text-gray-800  mx-auto px-4">
-          <div class='relative m-0 shadow-lg flex bg-white'>
-            <div class='flex-1 card-block relative'>
+          <div class='relative m-0 shadow-lg flex bg-white max-w-full'>
+            <div class='flex-1 card-block relative '>
               <div class="p-6">
                 <h4 class='font-medium text-2xl mb-3'>秦国今日高能时刻&ensp;dark-sword-22.github.io/danmuG/<br></h4>
                 <div v-for="(item, i) in tag_data_zfill" class="leading-normal he-line">
-                  <span class="text-blue-600"><a href="https://bilibili.com/">{{item[1][0]}}#{{item[1][1]}}:{{item[1][2]}}</a></span>
+                  <span class="text-blue-500"><a href="https://bilibili.com/">{{item[1][0]}}#{{item[1][1]}}:{{item[1][2]}}</a></span>
                   <span class="ml-1 font-normal">
-                    <span v-for="(tag, i) in item[0].split(' ')" class="bg-gray-100 rounded ml-1.5">&ensp;{{tag}}&ensp;</span>
+                    <span v-for="(tag, i) in item[0].split(' ')" class="bg-gray-100 rounded ml-2">&ensp;{{tag}}&ensp;</span>
                   </span>
                 </div>
-                <div class="text-sm text-grey block mt-6 font-semibold">本评论由弹幕G重伤倒地是否做错了什么自动生成&ensp;(<ゝω·)☆</div>
+                <div class="text-sm text-grey block mt-6 font-semibold flex w-full">
+                  <div class="flex-none">本评论由弹幕G重伤倒地是否做错了什么自动生成&ensp;(<ゝω·)☆</div>
+                  <div class="flex-grow flex flex-row-reverse">
+                    <div><input class="pl-12 pr-6 py-3 rounded outline-none w-48 focus:ring focus:border-blue-300" type="text" placeholder="prefix: default 0" v-model="prefix"></div>
+                    <div></div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -121,6 +127,7 @@
           tb_display: "block",
           button_str: "-",
           tag_data: tag_data,
+          prefix: "",
         },
         methods: {
           bt2clicked() {
@@ -143,9 +150,20 @@
         computed: {
           tag_data_zfill() {
             let lamb = (tuple) => {
-              return [tuple[0], [tuple[1][0].toString(), this.pad(tuple[1][1], 2), this.pad(tuple[1][2], 2)]]
+              let orn_seconds = tuple[1][0] * 3600 + tuple[1][1] * 60 + tuple[1][2] + this.prefix_int
+              let d1 = parseInt(orn_seconds/3600) + 1
+              let d2 = parseInt((orn_seconds%3600)/60)
+              let d3 = parseInt(orn_seconds%60)
+              return [tuple[0], [d1.toString(), this.pad(d2, 2), this.pad(d3, 2)]]
             }
             return this.tag_data.map(lamb)
+          },
+          prefix_int(){
+            if (this.prefix === '') {
+              return 0
+            } else {
+              return parseInt(this.prefix)
+            }
           }
         }
       })
