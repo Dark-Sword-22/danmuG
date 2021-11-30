@@ -21,7 +21,7 @@ class MQueue(asyncio.Queue):
 
 class Writer:
 
-    def __init__(self, watch_url, title, logger, activate_interval = 10):
+    def __init__(self, watch_url, title, logger, activate_interval = 100):
         '''
         弹幕姬版本: 0.1.0
         直播来源地址: ...
