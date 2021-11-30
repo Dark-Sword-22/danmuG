@@ -1,5 +1,6 @@
 # danmuG
 [![Pages](https://github.com/Dark-Sword-22/danmuG/actions/workflows/python-pages.yml/badge.svg)](https://github.com/Dark-Sword-22/danmuG/actions/workflows/python-pages.yml)
+
 秦川弹幕机器人
 
 ## 功能说明
