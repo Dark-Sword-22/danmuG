@@ -22,4 +22,4 @@
 4. 确保你使用Chrome浏览器并下载了对应版本的chromedriver
 5. 在本地执行`python danmu.py`即可
 6. 如果你想帮忙投稿弹幕的话请直接发ISSUE
-  
+   
