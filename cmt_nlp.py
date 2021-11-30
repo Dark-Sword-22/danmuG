@@ -9,7 +9,7 @@ from gensim import similarities
 from pipeit import *
 
 jieba.load_userdict(os.path.abspath('./nlp/jieba_userdict.txt'))
-STOPLIST = set('的,了,个,呢,呀,哈,哈哈,哈哈哈,哈哈哈哈,哈哈哈哈哈,哈哈哈哈哈哈,啦,？,?,！,，,(,),（,）,【,】, ~,",“,”,‘,’,—,-,。,.,啊,阿,吗,喂, '.split(','))
+STOPLIST = set('的,了,个,呢,呀,吧,哈,哈哈,哈哈哈,哈哈哈哈,哈哈哈哈哈,哈哈哈哈哈哈,啦,？,?,！,，,(,),（,）,【,】, ~,",“,”,‘,’,—,-,。,.,啊,阿,吗,喂, '.split(','))
 
 def split_string(string):
     return [_ for _ in jieba.lcut_for_search(string) if _ not in STOPLIST]
