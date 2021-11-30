@@ -39,7 +39,11 @@ def render(x_axis:List[str], yll:List[Optional[float]], ylh:List[Optional[float]
             ),
         )
         .set_global_opts(
-            title_opts=opts.TitleOpts(title=file_name, subtitle=f"总时长: {time_length}，总弹幕数量: {cmt_length}，每分钟平均: {avg_cmt}"),
+            title_opts=opts.TitleOpts(
+                title=file_name, 
+                subtitle=f"总时长: {time_length}，总弹幕数量: {cmt_length}，每分钟平均: {avg_cmt}",
+                title_link="/dangmuG/"
+            ),
             tooltip_opts=opts.TooltipOpts(trigger="axis"),
             xaxis_opts=opts.AxisOpts(type_="category", boundary_gap=False),
             yaxis_opts=opts.AxisOpts(is_scale=True),
