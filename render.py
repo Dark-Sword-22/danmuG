@@ -277,5 +277,6 @@ def main():
     fl.sort(key = lambda x:x[2], reverse = True)
     index_html = jinja22(fl)
     Write(os.path.join(dst_dir, 'index.html'), index_html)
+    Write('README.md', Read('README.md') + ' ')
 
 main()
