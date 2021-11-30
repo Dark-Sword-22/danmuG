@@ -11,74 +11,98 @@
       #tab1 {
         display: block;
       }
+      .he-line {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
     </style> 
+  <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
   <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
   {{extra_head}}
   </head>
   <body style="margin:0;padding:0">
-    <div class="flex flex-col">
-      <div class="flex-initial flex flex-row justify-center pt-2 pl-2">
-        <!-- <div class="flex-none w-28 items-center pt-1"><h1 class="font-extrabold text-2xl  text-gray-900">图表部分</h1></div> -->
-        <!-- <div class="flex-grow items-center">
-          <button class="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded-full" id='bt1'>
-          -
-          </button>
-        </div> -->
-      </div>
-      <div class="px-2" style="width:1900px;height:900px" id="main-chart">
-        {{main_chart_div}}
-      </div>
-      <div class="flex-initial flex flex-row justify-center pt-2 pl-2 mt-8 ml-2 mb-2">
-        <div class="flex-none w-40 items-center pt-1" id='pata-n-ao'><h1 class="font-extrabold text-2xl text-gray-900">高能时间统计</h1></div>
-        <div class="flex-grow items-center">
-          <button class="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded-full" id='bt2'>
-          -
-          </button>
+    <div id="app">
+      <div class="flex flex-col">
+        <div class="flex-initial flex flex-row justify-center pt-2 pl-2">
+          <!-- <div class="flex-none w-28 items-center pt-1"><h1 class="font-extrabold text-2xl  text-gray-900">图表部分</h1></div> -->
+          <!-- <div class="flex-grow items-center">
+            <button class="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded-full" id='bt1'>
+            -
+            </button>
+          </div> -->
         </div>
-      </div>
-      <div id="tab1" class="ml-2">
-        <div class="flex flex-col">
-          <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-            <div class="py-2 align-middle inline-block sm:px-6 lg:px-8">
-              <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
-                <table class="min-w-full divide-y divide-gray-200">
-                  <thead class="bg-gray-50">
-                    <tr>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        实际发生时间
-                      </th>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        参考时间
-                      </th>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        弹幕数量
-                      </th>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        弹幕内容
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody class="bg-white divide-y divide-gray-200">
-                    {{trs}}
-                    <!-- <tr>
-                      <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center">
-                            <div class="text-sm font-medium text-gray-900">
-                              0:00:00
-                            </div>
-                        </div>
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm text-gray-500">2022-02-22 22:22:22</div>
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                          22
-                        </span>
-                      </td>
-                    </tr> -->
-                  </tbody>
-                </table>
+        <div class="px-2" style="width:1900px;height:900px" id="main-chart">
+          {{main_chart_div}}
+        </div>
+        <div class="flex-initial flex flex-row justify-center pt-2 pl-2 mt-8 ml-2 mb-2">
+          <div class="flex-none w-40 items-center pt-1" id='pata-n-ao'><h1 class="font-extrabold text-2xl text-gray-900">高能时间统计</h1></div>
+          <div class="flex-grow items-center">
+            <button class="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded-full" @click="bt2clicked">
+            {{button_str}}
+            </button>
+          </div>
+        </div>
+        <div id="tab1" class="ml-2">
+          <div class="flex flex-col">
+            <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+              <div class="py-2 align-middle inline-block sm:px-6 lg:px-8">
+                <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
+                  <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                      <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          实际发生时间
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          参考时间
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          弹幕数量
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          弹幕内容
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                      {{trs}}
+                      <!-- <tr>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                          <div class="flex items-center">
+                              <div class="text-sm font-medium text-gray-900">
+                                0:00:00
+                              </div>
+                          </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                          <div class="text-sm text-gray-500">2022-02-22 22:22:22</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                          <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                            22
+                          </span>
+                        </td>
+                      </tr> -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="mt-8 ml-3 tracking-wide text-gray-800  mx-auto px-4">
+          <div class='relative m-0 shadow-lg flex bg-white'>
+            <div class='flex-1 card-block relative'>
+              <div class="p-6">
+                <h4 class='font-medium text-2xl mb-3'>秦国今日高能时刻&ensp;dark-sword-22.github.io/danmuG/<br></h4>
+                <div v-for="(item, i) in tag_data_zfill" class="leading-normal he-line">
+                  <span class="text-blue-600"><a href="https://bilibili.com/">{{item[1][0]}}#{{item[1][1]}}:{{item[1][2]}}</a></span>
+                  <span class="ml-1 font-normal">
+                    <span v-for="(tag, i) in item[0].split(' ')" class="bg-gray-100 rounded ml-1.5">&ensp;{{tag}}&ensp;</span>
+                  </span>
+                </div>
+                <div class="text-sm text-grey block mt-6 font-semibold">本评论由弹幕G重伤倒地是否做错了什么自动生成&ensp;(<ゝω·)☆</div>
               </div>
             </div>
           </div>
@@ -86,32 +110,45 @@
       </div>
     </div>
     <script>
-      let mc_display = 'block';
-      let tb_display = 'block';
-      window.onload = () => {
-        // document.getElementById('bt1').onclick = () => {
-        //   if (mc_display === 'block') {
-        //     document.getElementById('main-chart').style.display = "none";
-        //     mc_display = "none";
-        //     document.getElementById('bt1').innerHTML = '+';
-        //   } else {
-        //     document.getElementById('main-chart').style.display = "block";
-        //     mc_display = "block";
-        //     document.getElementById('bt1').innerHTML = '-';
-        //   }
-        // }
-        document.getElementById('bt2').onclick = () => {
-          if (tb_display === 'block') {
-            document.getElementById('tab1').style.display = "none";
-            tb_display = "none";
-            document.getElementById('bt2').innerHTML = '+';
-          } else {
-            document.getElementById('tab1').style.display = "block";
-            tb_display = "block";
-            document.getElementById('bt2').innerHTML = '-';
+      {{tag_res_data}}
+      let tag_data = JSON.parse(jsonStr)
+    </script>
+    <script>
+      var app = new Vue({
+        el: '#app',
+        data: {
+          message: 'Hello Vue!',
+          tb_display: "block",
+          button_str: "-",
+          tag_data: tag_data,
+        },
+        methods: {
+          bt2clicked() {
+            if (this.tb_display === 'block') {
+              document.getElementById('tab1').style.display = "none";
+              this.tb_display = "none";
+              this.button_str = '+';
+            } else {
+              document.getElementById('tab1').style.display = "block";
+              this.tb_display = "block";
+              this.button_str = '-';
+            }
+          },
+          pad(num, size) {
+              num = num.toString();
+              while (num.length < size) num = "0" + num;
+              return num;
+          }
+        },
+        computed: {
+          tag_data_zfill() {
+            let lamb = (tuple) => {
+              return [tuple[0], [tuple[1][0].toString(), this.pad(tuple[1][1], 2), this.pad(tuple[1][2], 2)]]
+            }
+            return this.tag_data.map(lamb)
           }
         }
-      }
+      })
     </script>
     {{extra_scripts}}
   </body>
