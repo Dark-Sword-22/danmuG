@@ -66,24 +66,30 @@
                       </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
-                      {{trs}}
-                      <!-- <tr>
+                      <tr v-for="(obj, i) in trs_data_zfill">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                          <div class="text-sm text-gray-500">
+                            {{obj[1]}}
+                          </div>
+                        </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                           <div class="flex items-center">
                               <div class="text-sm font-medium text-gray-900">
-                                0:00:00
+                                {{obj[0]}}
                               </div>
                           </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                          <div class="text-sm text-gray-500">2022-02-22 22:22:22</div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
                           <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                            22
+                            {{obj[2]}}
                           </span>
                         </td>
-                      </tr> -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                          <div class="text-sm text-gray-500">
+                            {{obj[3]}}
+                          </div>
+                        </td>
+                      </tr>
                     </tbody>
                   </table>
                 </div>
@@ -91,8 +97,8 @@
             </div>
           </div>
         </div>
-        <div class="mt-8 ml-3 tracking-wide text-gray-800  mx-auto px-4">
-          <div class='relative m-0 shadow-lg flex bg-white max-w-full'>
+        <div class="mt-8 ml-3 mb-8 tracking-wide text-gray-800  mx-auto px-4">
+          <div class='relative m-0 shadow-lg flex bg-white max-w-full rounded'>
             <div class='flex-1 card-block relative '>
               <div class="p-6">
                 <h4 class='font-medium text-2xl mb-3'>秦国今日高能时刻&ensp;dark-sword-22.github.io/danmuG/<br></h4>
@@ -118,6 +124,8 @@
     <script>
       {{tag_res_data}}
       let tag_data = JSON.parse(jsonStr)
+      {{trs_data}}
+      let trs_data = JSON.parse(trsJsonStr)
     </script>
     <script>
       var app = new Vue({
@@ -127,6 +135,7 @@
           tb_display: "block",
           button_str: "-",
           tag_data: tag_data,
+          trs_data: trs_data,
           prefix: "",
         },
         methods: {
@@ -157,6 +166,16 @@
               return [tuple[0], [d1.toString(), this.pad(d2, 2), this.pad(d3, 2)]]
             }
             return this.tag_data.map(lamb)
+          },
+          trs_data_zfill() {
+            let lamb = (tuple) => {
+              let orn_seconds = parseInt(tuple[0].substring(0,2)) * 3600 + parseInt(tuple[0].substring(3,5)) * 60 + parseInt(tuple[0].substring(7,9)) + this.prefix_int
+              let d1 = parseInt(orn_seconds/3600)
+              let d2 = parseInt((orn_seconds%3600)/60)
+              let d3 = parseInt(orn_seconds%60)
+              return [this.pad(d1, 2)+':'+this.pad(d2, 2)+':'+this.pad(d3, 2),tuple[1],tuple[2],tuple[3]]
+            }
+            return this.trs_data.map(lamb)
           },
           prefix_int(){
             if (this.prefix === '') {

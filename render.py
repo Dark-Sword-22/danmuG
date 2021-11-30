@@ -54,33 +54,11 @@ def render(x_axis:List[str], yll:List[Optional[float]], ylh:List[Optional[float]
     return grid
 
 def jinja222(extra_head, main_chart_div, ptao, extra_scripts, tag_res):
-    template = Read(os.path.abspath('./templates/html22-2.html'))
-    tr_tmplate ='''
-                    <tr>
-                      <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm text-gray-500">{ttime}</div>
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center">
-                            <div class="text-sm font-medium text-gray-900">
-                              {dtime}
-                            </div>
-                        </div>
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                          {cmtl}
-                        </span>
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm text-gray-500">{cmtc}</div>
-                      </td>
-                    </tr>'''
-    trs = ''.join([tr_tmplate.format(dtime = dtime, ttime = ttime, cmtl = cmtl, cmtc = cmtc) for dtime, ttime, cmtl, cmtc in ptao])
     template = (
-        template.replace('{{extra_head}}', str(extra_head))
+        Read(os.path.abspath('./templates/html22-2.html'))
+        .replace('{{extra_head}}', str(extra_head))
         .replace('{{main_chart_div}}', str(main_chart_div))
-        .replace('{{trs}}', str(trs))
+        .replace('{{trs_data}}', f"let trsJsonStr={repr(json.dumps(ptao))}")
         .replace('{{extra_scripts}}', str(extra_scripts))
         .replace('{{tag_res_data}}', f"let jsonStr={repr(json.dumps(tag_res))}")
     )
