@@ -180,10 +180,13 @@ class Fisherman:
             '阴阳怪气充盈，随时可化身杠精',
             '晦气，晦气啊！',
             '急了 他急了 主播他急了',
+            '您的客户端较老，暂不支持显示表情',
         }
         self._re_block_set = (
             re.compile(".*感谢.*大佬"),
+            re.compile("\[emts\][\s\S]*?\[/emts\]")
         )
+        self._string_filter = lambda x: x.replace('\r\n','\n').replace('\n',' ').strip()
 
     def ddos_protect(self, cmt):
         '''
@@ -245,7 +248,7 @@ class Fisherman:
     def ddos_reset(self):
         self._cmt_buffer = deque()
         self._buffer_count = dict()
-        self._buffer_last_refresh_time = time.tim
+        self._buffer_last_refresh_time = time.time()
 
     async def pending(self):
         while True:
@@ -309,6 +312,7 @@ class Fisherman:
 
     async def git_pull(self):
         self.logger.debug("Git pull triggered")
+        return
         def wraper():
             try:
                 os.system("git checkout .")
@@ -334,7 +338,7 @@ class Fisherman:
                 self.logger.info(f'cmt - {m["name"]}：{m["content"]}')
                 cmt = self.ddos_protect(cmt)
                 if cmt:
-                    writer.update(cmt)
+                    writer.update(self._string_filter(cmt))
             elif m['msg_type'] == 'close':
                 self.logger.info("接收到终止信号，写入线程退出")
                 self.ddos_reset()
