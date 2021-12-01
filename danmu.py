@@ -340,6 +340,7 @@ async def main(logger):
     except:
         watch_id = '361433'
     
+    logger.info(f"目标网址：{URL_FORMATTER.format(watch_id)}")
     loop = asyncio.get_running_loop()
     # 
     switch = StreamingSwitch(logger)
