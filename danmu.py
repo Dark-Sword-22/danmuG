@@ -286,12 +286,11 @@ class Fisherman:
                 os.system("git push")
             except:
                 ...
-        await loop.run_in_executor(None, wraper)
+        await self.loop.run_in_executor(None, wraper)
         self.logger.info("Git pushed")
 
     async def git_pull(self):
         self.logger.debug("Git pull triggered")
-        return
         def wraper():
             try:
                 os.system("git checkout .")
@@ -300,7 +299,7 @@ class Fisherman:
                 os.system("git pull")
             except:
                 ...
-        await loop.run_in_executor(None, wraper)
+        await self.loop.run_in_executor(None, wraper)
         self.logger.info("Git pulled")
 
     async def message_hanlder(self, writer_prepared, close_pushed):
