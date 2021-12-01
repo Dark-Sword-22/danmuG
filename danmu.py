@@ -194,6 +194,7 @@ class Fisherman:
             如果弹幕风暴大量出现，那么写入间隔会很短。但最短间隔不会低于~0.2s
             另有一时间计数器，被动触发，最短触发间隔60秒，会清空buffer内60s以上的缓存
         '''
+        logger.debug(f"{len(self._cmt_buffer)}, {len(self._buffer_count)}")
         if cmt in self._block_set or len(cmt) == 0:
             return None
         for pat in self._re_block_set:
@@ -362,7 +363,8 @@ async def main(logger):
             return
 
 
-# logger.add("log_1.txt", level="DEBUG", rotation="5 MB")
+# 
 logger.remove()
-logger.add(sys.stdout, level='DEBUG')
+logger.add("log_out.txt", level="DEBUG", rotation="5 MB")
+logger.add(sys.stdout, level='INFO')
 asyncio.get_event_loop().run_until_complete(main(logger))
