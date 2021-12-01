@@ -20,6 +20,7 @@ VERSION = '0.3.0'
 SLEEP_INTERVAL = 5
 URL_FORMATTER = "https://cc.163.com/{0}/"
 
+
 class StreamingSwitch:
 
     def __init__(self, logger):
@@ -47,6 +48,7 @@ class StreamingSwitch:
         else:
             self.pending_list.append(hanger)
 
+
 class MQueue(asyncio.Queue):
 
     def __init__(self, *args, **kwargs):
@@ -56,6 +58,7 @@ class MQueue(asyncio.Queue):
         await self.put({'msg_type':'Close'})
         while not self.empty():
             await self.get()
+
 
 class Writer:
 
@@ -91,6 +94,7 @@ class Writer:
 
     def format_seconds(self, seconds: int) -> str:
         return f"{str(int(seconds // 3600)).zfill(2)}:{str(int((seconds%3600) // 60)).zfill(2)}:{str(int(seconds%60)).zfill(2)}"
+
 
 class Observer:
 
@@ -130,6 +134,8 @@ class Observer:
                 for _ in range((24 * 60 * 60) // SLEEP_INTERVAL):
                     loop_st_time = time.time()
                     on_streaming = await self.detact_if_streaming(session)
+                    if not on_streaming and _ % 10 == 0:
+                        self.logger.info(f"守护线程 - 本次获取到直播间状态为{'开启' if on_streaming else '关闭'}")
                     self.logger.debug(f"守护线程 - 本次获取到直播间状态为{'开启' if on_streaming else '关闭'}")
                     if on_streaming:
                         fail_count = 0
@@ -151,6 +157,7 @@ class Observer:
     def switch_off(self):
         if self.switch.is_on():
             self.switch.off()
+
 
 class Fisherman:
 
@@ -353,7 +360,8 @@ async def main(logger):
             await loop.shutdown_default_executor()
             return
 
-logger.add("log_1.txt", level="DEBUG", rotation="5 MB")
+
+# logger.add("log_1.txt", level="DEBUG", rotation="5 MB")
 logger.remove()
-logger.add(sys.stdout, level='INFO')
+logger.add(sys.stdout, level='DEBUG')
 asyncio.get_event_loop().run_until_complete(main(logger))
