@@ -206,8 +206,13 @@ class Fisherman:
             for key in tuple(self._buffer_count.keys()):
                 _, _time, _ = self._buffer_count[key]
                 if (current_time - _time) >= 60:
-                    del self._buffer_count[key]
-                    self._cmt_buffer.remove(key)
+                    try:
+                        del self._buffer_count[key]
+                        self._cmt_buffer.remove(key)
+                    except:
+                        self._buffer_count = {}
+                        self._cmt_buffer = deque()
+                        return cmt # 正确清理deque后无必要
         #
         if cmt not in self._cmt_buffer:
             self._cmt_buffer.append(cmt)
@@ -236,6 +241,11 @@ class Fisherman:
                 nslt = 3
             self._buffer_count[cmt][2] = nslt
             return res
+
+    def ddos_reset(self):
+        self._cmt_buffer = deque()
+        self._buffer_count = dict()
+        self._buffer_last_refresh_time = time.tim
 
     async def pending(self):
         while True:
@@ -314,6 +324,7 @@ class Fisherman:
         self.logger.info("开辟新的写入线程")
         title, _ = await asyncio.gather(self.get_stream_title(), self.git_pull())
         self.logger.info(f"获取到直播间标题：{title}")
+        self.ddos_reset()
         writer = Writer(self.rid, title, self.logger)
         writer_prepared.set_result(None)
         while True:
@@ -326,6 +337,7 @@ class Fisherman:
                     writer.update(cmt)
             elif m['msg_type'] == 'close':
                 self.logger.info("接收到终止信号，写入线程退出")
+                self.ddos_reset()
                 await self.git_push()
                 close_pushed.set_result(None)
                 return 
