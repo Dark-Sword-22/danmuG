@@ -12,7 +12,6 @@ import os
 
 logger.remove()
 logger.add(sys.stdout, level = 'DEBUG')
-print(os.getcwd())
 
 class NotExistsError(Exception):
     ...

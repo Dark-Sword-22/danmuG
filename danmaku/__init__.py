@@ -25,9 +25,13 @@ from .zhanqi import ZhanQi
 
 __all__ = ['DanmakuClient']
 
+class DMCCloseException(Exception):
+    ...
+
 
 class DanmakuClient:
-    def __init__(self, url, q):
+    def __init__(self, id, q):
+        url = f"https://cc.163.com/{id}/"
         self.__url = ''
         self.__site = None
         self.__hs = None
@@ -89,7 +93,10 @@ class DanmakuClient:
                 if self.__u == 'qf.56.com' or self.__u == 'laifeng.com' or self.__u == 'look.163.com':
                     await self.__ws.send_str(self.__site.heartbeat)
                 else:
-                    await self.__ws.send_bytes(self.__site.heartbeat)
+                    if not self.__ws.closed:
+                        await self.__ws.send_bytes(self.__site.heartbeat)
+                    else:
+                        raise Exception("ws closed")
             except:
                 pass
 
@@ -101,7 +108,10 @@ class DanmakuClient:
                 for m in ms:
                     await self.__dm_queue.put(m)
             await asyncio.sleep(1)
-            await self.init_ws()
+            if not self.__stop:
+                await self.init_ws()
+            else:
+                raise DMCCloseException("dmc closed")
             await asyncio.sleep(1)
 
     async def init_ws_huajiao(self):
@@ -234,4 +244,6 @@ class DanmakuClient:
 
     async def stop(self):
         self.__stop = True
+        if self.__ws:
+            await self.__ws.close()
         await self.__hs.close()
