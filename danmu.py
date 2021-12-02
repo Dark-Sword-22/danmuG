@@ -135,7 +135,7 @@ class Observer:
                 for _ in range((24 * 60 * 60) // SLEEP_INTERVAL):
                     loop_st_time = time.time()
                     on_streaming = await self.detact_if_streaming(session)
-                    if not on_streaming and _ % 50 == 0:
+                    if not on_streaming and _ % 100 == 0:
                         self.logger.info(f"守护线程 - 本次获取到直播间状态为{'开启' if on_streaming else '关闭'}")
                     self.logger.debug(f"守护线程 - 本次获取到直播间状态为{'开启' if on_streaming else '关闭'}")
                     if on_streaming:
