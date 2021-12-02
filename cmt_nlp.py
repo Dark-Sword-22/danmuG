@@ -16,8 +16,8 @@ def split_string(string):
 
 def load_processed_corpus_single_file(file_path, filter=False, debug=False):
     texts = (
-        Read(file_path).split('\n')[6:] 
-        | Map(lambda x:(split_string(x[22:]), x[22:]))
+        Read(file_path).split('\n')[7:] 
+        | Map(lambda x:(split_string(x[37:]), x[37:]))
         | Filter(lambda x: x[0] != [])
         | list
     )
@@ -50,7 +50,7 @@ def train_nlp_model(src_dir, file_name, passes = 5, file_count = 3):
             | Filter(lambda x: os.stat(x).st_size >= 1024) 
             | list
         ); break
-    src_files.sort(key = lambda x:datetime.datetime.strptime(os.path.split(x)[1][6:6+19], '%Y-%m-%d-%H-%M-%S'), reverse = True)
+    src_files.sort(key = lambda x:datetime.datetime.strptime(os.path.split(x)[1][6:6+23], '%Y-%m-%d-%H-%M-%S-%f'), reverse = True)
     
     file_path = os.path.join(src_dir, file_name)
 

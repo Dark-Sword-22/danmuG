@@ -92,9 +92,9 @@ def main():
         src_files = src_files[2] | Filter(lambda x:x[:5] == 'danmu' and os.path.splitext(x)[1] == '.txt') | Map(lambda x: os.path.splitext(x)[0]) | set 
         break
     dst_files = []
-    for dst_files in os.walk(dst_dir):
-        dst_files = dst_files[2] | Filter(lambda x:x[:5] == 'danmu' and os.path.splitext(x)[1] == '.html') | Map(lambda x: os.path.splitext(x)[0]) | set 
-        break
+    # for dst_files in os.walk(dst_dir):
+    #     dst_files = dst_files[2] | Filter(lambda x:x[:5] == 'danmu' and os.path.splitext(x)[1] == '.html') | Map(lambda x: os.path.splitext(x)[0]) | set 
+    #     break
 
     diff_files = sorted(src_files.difference(dst_files) | Map(lambda x:x+'.txt') | list)
     drop_list = []
@@ -102,7 +102,7 @@ def main():
 
         file_path = os.path.join(src_dir, file_name)
         text = Read(file_path).split('\n') | Filter(lambda x:x.strip() != '') | list
-        st_time = datetime.datetime.strptime(text[3], '%Y-%m-%d %H:%M:%S')
+        st_time = datetime.datetime.strptime(text[2][text[2].index(':') + 2:-4], '%Y-%m-%d %H:%M:%S')
         if len(text) <= 50:
             drop_list.append(file_path)
             continue
@@ -112,8 +112,8 @@ def main():
         processed_corpus, lda, index, dictionary = train_nlp_model(src_dir, file_name, passes = 5, file_count = 1)
 
 
-        text_backup = text[min(len(text) - 1, 5):] | Map(lambda x: (datetime.datetime.strptime(x[:19], '%Y-%m-%d %H:%M:%S'), x[22:])) | list 
-        text = text[min(len(text) - 1, 5):] | Map(lambda x: (datetime.datetime.strptime(x[:19], '%Y-%m-%d %H:%M:%S') - st_time).total_seconds()) | list
+        text_backup = text[min(len(text) - 1, 7):] | Map(lambda x: (datetime.datetime.strptime(x[:19], '%Y-%m-%d %H:%M:%S'), x[37:])) | list 
+        text = text[min(len(text) - 1, 7):] | Map(lambda x: (datetime.datetime.strptime(x[:19], '%Y-%m-%d %H:%M:%S') - st_time).total_seconds()) | list
         cmt_length = len(text)
         time_length = text[-1] - text[0]
         avg_cmt = round(cmt_length / (time_length / 60),2)
@@ -275,8 +275,8 @@ def main():
             file_size = f"{round(file_size / 1024 , 2)}KB"
         else:
             file_size = f"{file_size}B"
-        cmt_length = max(len(Read(source_path).split('\n')) - 6, 0)
-        file_create_time = datetime.datetime.strptime(file_name[6:6+19], '%Y-%m-%d-%H-%M-%S')
+        cmt_length = max(len(Read(source_path).split('\n')) - 7, 0)
+        file_create_time = datetime.datetime.strptime(file_name[6:6+23], '%Y-%m-%d-%H-%M-%S-%f')
         fl.append((file_url, file_html, file_create_time, file_size, cmt_length))
     fl.sort(key = lambda x:x[2], reverse = True)
     index_html = jinja22(fl)

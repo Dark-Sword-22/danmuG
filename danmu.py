@@ -84,7 +84,7 @@ class Writer:
         self.last_update_time = time.time()
         with open(self.file_name,'w',encoding='utf-8') as f:
             f.write(f"弹幕姬版本: {VERSION}\n直播来源地址: {watch_url}\n开始记录时间: {self._file_name_time}\n视频地址: \n时轴修正: +0\n\n{'='*50}\n")
-        self.logger.info(f"记事本初始化, 弹幕姬版本: {VERSION}, 直播来源地址: {watch_url}")
+        self.logger.info(f"记事本初始化, 弹幕姬版本: {VERSION}")
 
     def update(self, words: str):
         self.last_update_time = time.time()
@@ -95,7 +95,7 @@ class Writer:
             f.write(f"{str(current_time + datetime.timedelta(seconds = 3600*8))[:19]}.{str(int(current_time.microsecond // 1000)).zfill(3)} - {time_diff} - {words}\n")
 
     def format_seconds(self, seconds: int) -> str:
-        return f"{str(int(seconds // 3600)).zfill(2)}:{str(int((seconds%3600) // 60)).zfill(2)}:{str(int(seconds%60)).zfill(2)}.{str(int((seconds - int(seconds)) * 1000)).zfill(3)}"
+        return f"{str(int(seconds // 3600)).zfill(2)}:{str(int((seconds%3600) // 60)).zfill(2)}:{str(int(seconds%60)).zfill(2)}"
 
 
 class Observer:
