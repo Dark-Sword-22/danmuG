@@ -148,8 +148,6 @@ class Observer:
                             fail_count = 0
                     sleep_time = max(0, SLEEP_INTERVAL - time.time() + loop_st_time)
                     await asyncio.sleep(sleep_time)
-                else:
-                    break
 
     def switch_on(self):
         if not self.switch.is_on():
@@ -387,6 +385,6 @@ async def main(logger):
 # loguru treatments
 sys.stdout.reconfigure(encoding='utf-8', errors='backslashreplace')
 logger.remove()
-# logger.add("log_out.txt", level="DEBUG", rotation="5 MB")
+logger.add("log_out.txt", level="DEBUG", rotation="5 MB")
 logger.add(sys.stdout, level='INFO')
 asyncio.get_event_loop().run_until_complete(main(logger))
