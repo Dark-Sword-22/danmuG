@@ -62,7 +62,7 @@ class MQueue(asyncio.Queue):
 
 class Writer:
 
-    def __init__(self, rid, title, logger, activate_interval = 10):
+    def __init__(self, rid, title, logger):
         '''
         弹幕姬版本: 0.1.0
         直播来源地址: ...
@@ -80,7 +80,6 @@ class Writer:
         self._file_name_time = f"{str(self._start_time + datetime.timedelta(seconds = 3600*8))[:19]}.{str(int(self._start_time.microsecond//1000)).zfill(3)}"
         self.file_name = os.path.join(os.path.abspath('./data/'), f'danmu-{self._file_name_time.replace(":", "-").replace(" ","-").replace(".","-")}-{title}.txt')
         self.logger = logger
-        self._activate_interval = activate_interval
         self.last_update_time = time.time()
         with open(self.file_name,'w',encoding='utf-8') as f:
             f.write(f"弹幕姬版本: {VERSION}\n直播来源地址: {watch_url}\n开始记录时间: {self._file_name_time}\n视频地址: \n时轴修正: +0\n\n{'='*50}\n")
@@ -136,7 +135,7 @@ class Observer:
                 for _ in range((24 * 60 * 60) // SLEEP_INTERVAL):
                     loop_st_time = time.time()
                     on_streaming = await self.detact_if_streaming(session)
-                    if not on_streaming and _ % 10 == 0:
+                    if not on_streaming and _ % 50 == 0:
                         self.logger.info(f"守护线程 - 本次获取到直播间状态为{'开启' if on_streaming else '关闭'}")
                     self.logger.debug(f"守护线程 - 本次获取到直播间状态为{'开启' if on_streaming else '关闭'}")
                     if on_streaming:
