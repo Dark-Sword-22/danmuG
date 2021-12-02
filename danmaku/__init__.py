@@ -1,27 +1,8 @@
 import asyncio
 import re
-
 import aiohttp
-
-# from .yqs import YiQiShan
-# from .acfun import AcFun
-# from .bilibili import Bilibili
 from .cc import CC
-# from .douyu import Douyu
-# from .egame import eGame
-# from .huajiao import HuaJiao
-# from .huomao import HuoMao
-# from .huya import Huya
-# from .inke import Inke
-# from .kuaishou import KuaiShou
-# from .kugou import KuGou
-# from .laifeng import LaiFeng
-# from .longzhu import LongZhu
-# from .look import Look
-# from .pps import QiXiu
-# from .qf import QF
-# from .zhanqi import ZhanQi
-# from .yy import YY
+
 
 __all__ = ['DanmakuClient']
 

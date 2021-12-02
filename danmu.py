@@ -16,7 +16,7 @@ from loguru import logger
 from pipeit import *
 
 
-VERSION = '0.3.0'
+VERSION = '0.3.1'
 SLEEP_INTERVAL = 5
 URL_FORMATTER = "https://cc.163.com/{0}/"
 
@@ -66,22 +66,24 @@ class Writer:
         '''
         弹幕姬版本: 0.1.0
         直播来源地址: ...
-        开始记录时间:
-        2020-01-01 22:22:22
+        开始记录时间: 2020-01-01 22:22:22.222
+        视频地址: https://bilibili.com/bv..
+        时轴修正: +22
 
         ================================================== * 50
-        2021-11-24 00:31:39 - 00:12:22 - zaima 
+        2021-11-24 00:31:39.333 - 00:12:22.222 - zaima 
         '''
         watch_url = URL_FORMATTER.format(rid)
         title = title.replace('/','').replace('\\','').replace('?','').replace(' ','')
         self._start_time = datetime.datetime.now()
-        self._file_name_time = str(self._start_time + datetime.timedelta(seconds = 3600*8))[:19]
-        self.file_name = os.path.join(os.path.abspath('./data/'), f'danmu-{self._file_name_time}-{title}.txt'.replace(':', '-').replace(' ','-'))
+        # UTC-TIME
+        self._file_name_time = f"{str(self._start_time + datetime.timedelta(seconds = 3600*8))[:19]}.{str(int(self._start_time.microsecond//1000)).zfill(3)}"
+        self.file_name = os.path.join(os.path.abspath('./data/'), f'danmu-{self._file_name_time.replace(":", "-").replace(" ","-").replace(".","-")}-{title}.txt')
         self.logger = logger
         self._activate_interval = activate_interval
         self.last_update_time = time.time()
         with open(self.file_name,'w',encoding='utf-8') as f:
-            f.write(f"弹幕姬版本: {VERSION}\n直播来源地址: {watch_url}\n开始记录时间:\n{self._file_name_time}\n\n{'='*50}\n")
+            f.write(f"弹幕姬版本: {VERSION}\n直播来源地址: {watch_url}\n开始记录时间: {self._file_name_time}\n视频地址: \n时轴修正: +0\n\n{'='*50}\n")
         self.logger.info(f"记事本初始化, 弹幕姬版本: {VERSION}, 直播来源地址: {watch_url}")
 
     def update(self, words: str):
@@ -90,10 +92,10 @@ class Writer:
             current_time = datetime.datetime.now()
             time_diff = (current_time - self._start_time).total_seconds()
             time_diff = self.format_seconds(time_diff)
-            f.write(f"{str(current_time + datetime.timedelta(seconds = 3600*8))[:19]} - {time_diff} - {words}\n")
+            f.write(f"{str(current_time + datetime.timedelta(seconds = 3600*8))[:19]}.{str(int(current_time.microsecond // 1000)).zfill(3)} - {time_diff} - {words}\n")
 
     def format_seconds(self, seconds: int) -> str:
-        return f"{str(int(seconds // 3600)).zfill(2)}:{str(int((seconds%3600) // 60)).zfill(2)}:{str(int(seconds%60)).zfill(2)}"
+        return f"{str(int(seconds // 3600)).zfill(2)}:{str(int((seconds%3600) // 60)).zfill(2)}:{str(int(seconds%60)).zfill(2)}.{str(int((seconds - int(seconds)) * 1000)).zfill(3)}"
 
 
 class Observer:
@@ -173,6 +175,10 @@ class Fisherman:
         self._buffer_count = dict()
         self._buffer_last_refresh_time = time.time()
         self._block_set = {
+            '.',
+            '1',
+            '2',
+            '3',
             '欢迎来到直播间',
             '阻碍我的 豆浆烩面！',
             '宝，我能做你的掌中宝嘛~',
@@ -379,8 +385,9 @@ async def main(logger):
             return
 
 
-# 
+# loguru treatments
+sys.stdout.reconfigure(encoding='utf-8', errors='backslashreplace')
 logger.remove()
-logger.add("log_out.txt", level="DEBUG", rotation="5 MB")
+# logger.add("log_out.txt", level="DEBUG", rotation="5 MB")
 logger.add(sys.stdout, level='INFO')
 asyncio.get_event_loop().run_until_complete(main(logger))
