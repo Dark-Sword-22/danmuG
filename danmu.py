@@ -129,7 +129,7 @@ class Observer:
 
     async def daemon(self):
         fail_count = 0
-        fail_target = ceil(30 / SLEEP_INTERVAL)
+        fail_target = ceil(60 / SLEEP_INTERVAL)
         while True:
             async with ClientSession() as session:
                 for _ in range((24 * 60 * 60) // SLEEP_INTERVAL):
