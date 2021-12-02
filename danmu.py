@@ -318,7 +318,7 @@ class Fisherman:
 
     async def git_pull(self):
         self.logger.debug("Git pull triggered")
-        return
+        # return
         def wraper():
             try:
                 os.system("git checkout .")

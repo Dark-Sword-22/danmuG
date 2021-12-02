@@ -8,6 +8,7 @@ from cmt_nlp import train_nlp_model, string_query
 from pipeit import *
 import json
 import os
+import sys
 
 def render(x_axis:List[str], yll:List[Optional[float]], ylh:List[Optional[float]], avg: float, cmt_length, time_length, avg_cmt, file_name):
     line = (
@@ -83,7 +84,7 @@ def jinja22(fl):
     return template
 
 
-def main():
+def main(mode):
     src_dir = os.path.abspath('./data')
     dst_dir = os.path.abspath('./docs')
 
@@ -92,11 +93,18 @@ def main():
         src_files = src_files[2] | Filter(lambda x:x[:5] == 'danmu' and os.path.splitext(x)[1] == '.txt') | Map(lambda x: os.path.splitext(x)[0]) | set 
         break
     dst_files = []
-    # for dst_files in os.walk(dst_dir):
-    #     dst_files = dst_files[2] | Filter(lambda x:x[:5] == 'danmu' and os.path.splitext(x)[1] == '.html') | Map(lambda x: os.path.splitext(x)[0]) | set 
-    #     break
+    for dst_files in os.walk(dst_dir):
+        dst_files = dst_files[2] | Filter(lambda x:x[:5] == 'danmu' and os.path.splitext(x)[1] == '.html') | Map(lambda x: os.path.splitext(x)[0]) | set 
+        break
+    if mode == '0':
+        diff_files = sorted(src_files.difference(dst_files) | Map(lambda x:x+'.txt') | list)
+    elif mode == '1':
+        diff_files = src_files | Map(lambda x:x+'.txt') | list
+        diff_files.sort(key = lambda x: datetime.datetime.strptime(x[6:6+23], '%Y-%m-%d-%H-%M-%S-%f'), reverse = True)
+        diff_files = [diff_files[0],]
+    else:
+        raise
 
-    diff_files = sorted(src_files.difference(dst_files) | Map(lambda x:x+'.txt') | list)
     drop_list = []
     for file_name in diff_files:
 
@@ -283,4 +291,11 @@ def main():
     Write(os.path.join(dst_dir, 'index.html'), index_html)
     Write('README.md', Read('README.md') + ' ')
 
-main()
+try:
+    if sys.argv[1] == '1':
+        mode = '1'
+    else:
+        mode = '0'
+except:
+    mode = '0'
+main(mode = mode)
