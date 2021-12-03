@@ -87,7 +87,6 @@ async def scan_and_init(engine):
         _get = lambda x: x[x.index(':')+1:].strip()
         logs = string.split('\n')
         bvid = _get(logs[3])
-        print(bvid, 'sss')
         if len(bvid) > 5: bvid = bvid[len(bvid) - bvid[::-1].index('/'):]
         else: bvid = ''
         cids = _get(logs[4])
@@ -138,6 +137,7 @@ async def scan_and_init(engine):
             item['bvid'] = bvid
             item['rnd'] = random.randint(0,1e6)
         for cid, (time_cut, fixer) in zip(cids, prefixs):
+            print(cid, time_cut, fixer)
             time_cut = time_cut * 1000
             for item in contents:
                 item['send_time'] = int(item['send_time'] + fixer * 1000)
