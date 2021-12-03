@@ -13,9 +13,9 @@ engine = create_async_engine(URL.create(**sqlite_db), echo=True, future=True)
 
 error_codes = [
     [{"loc":["query","qid"],"msg":"illegal value, cmt status incorrect","type":"value_error"}], # -1
-    [{"loc":["query","bvid"],"msg":"illegal video","type":"value_error"}],                      #-2
-    [{"loc":["query","token"],"msg":"token test fail","type":"value_error"}],                   #-3
-    [{"loc":["query","bvid"],"msg":"video not found","type":"value_error"}],                    #-4
+    [{"loc":["query","bvid"],"msg":"illegal video","type":"value_error"}],                      # -2
+    [{"loc":["query","token"],"msg":"token test fail","type":"value_error"}],                   # -3
+    [{"loc":["query","bvid"],"msg":"video not found","type":"value_error"}],                    # -4
     [{"loc":["query","bvid"],"msg":"check fail","type":"assertion_error"}],                     # -5
 ]
 for idx in range(len(error_codes)): error_codes[idx] = (-idx-1, {'success':0, 'detail':error_codes[idx]})

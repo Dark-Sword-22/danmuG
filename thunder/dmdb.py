@@ -6,6 +6,7 @@ import hashlib
 import re
 import random
 import time
+import json
 from sqlalchemy import Column, Integer, String, DateTime, String, SmallInteger, text, Boolean
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import declarative_base, sessionmaker, Session, selectinload
@@ -83,14 +84,25 @@ async def scan_and_init(engine):
         '''
         前置的数据清洗抽象，根据记录格式做出适配
         '''
+        _get = lambda x: x[x.index(':')+1:].strip()
         logs = string.split('\n')
+        bvid = _get(logs[3])
+        print(bvid, 'sss')
+        if len(bvid) > 5: bvid = bvid[len(bvid) - bvid[::-1].index('/'):]
+        else: bvid = ''
+        cids = _get(logs[4])
+        if len(cids) > 5: cids = json.loads(cids) | Map(lambda x: str(x)) | list
+        else: cids = []
+        prefixs = _get(logs[5])
+        if len(prefixs) > 5: prefixs = json.loads(prefixs)
+        else: prefixs = []
         return (
             datetime.datetime.strptime(logs[2][logs[2].index(':')+2:], '%Y-%m-%d %H:%M:%S.%f'), 
-            'BVzhang',
-            ['1', '2', '3', '4', '5'],
-            [[3600, 10], [3600, 10], [3600, 10], [3600, 10], [3600, 10]],
+            bvid,
+            cids,
+            prefixs,
             deque(sorted(
-                logs[7:] 
+                logs[8:] 
                 | Filter(lambda x: len(x) >= 37) 
                 | Map(
                     lambda x: dict(zip(
@@ -115,6 +127,9 @@ async def scan_and_init(engine):
                 assert isinstance(item, list)
                 for _ in item:
                     assert isinstance(_, int)
+            assert len(bvid) > 0
+            assert len(cids) > 0
+            assert len(prefixs) > 0
         except:
             return None, None, False
         res = []
@@ -175,7 +190,6 @@ async def scan_and_init(engine):
                 _tup = contents[_:_+_step] | Filter(lambda x: x['hash'] in update_set) | tuple
                 stmt = insert(table).values(_tup).on_conflict_do_nothing() if _tup else text("select 1")
                 await session.execute(stmt)
-            break
         await session.commit()
 
 async def clean_task_daemon(engine, msg_core):

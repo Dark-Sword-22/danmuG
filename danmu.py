@@ -82,7 +82,7 @@ class Writer:
         self.logger = logger
         self.last_update_time = time.time()
         with open(self.file_name,'w',encoding='utf-8') as f:
-            f.write(f"弹幕姬版本: {VERSION}\n直播来源地址: {watch_url}\n开始记录时间: {self._file_name_time}\n视频地址: \n时轴修正: +0\n\n{'='*50}\n")
+            f.write(f"弹幕姬版本: {VERSION}\n直播来源地址: {watch_url}\n开始记录时间: {self._file_name_time}\n视频地址: \nCID: \n时轴修正: \n\n{'='*50}\n")
         self.logger.info(f"记事本初始化, 弹幕姬版本: {VERSION}")
 
     def update(self, words: str):

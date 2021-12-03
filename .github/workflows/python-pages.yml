@@ -37,6 +37,9 @@ jobs:
     - name: Regex filter
       run: |
         python cmt_filter.py
+    - name: Get video metas
+      run: |
+        python informations.py
     - name: Render HTML
       run: |
         python render.py

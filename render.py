@@ -120,8 +120,8 @@ def main(mode):
         processed_corpus, lda, index, dictionary = train_nlp_model(src_dir, file_name, passes = 5, file_count = 1)
 
 
-        text_backup = text[min(len(text) - 1, 7):] | Map(lambda x: (datetime.datetime.strptime(x[:19], '%Y-%m-%d %H:%M:%S'), x[37:])) | list 
-        text = text[min(len(text) - 1, 7):] | Map(lambda x: (datetime.datetime.strptime(x[:19], '%Y-%m-%d %H:%M:%S') - st_time).total_seconds()) | list
+        text_backup = text[min(len(text) - 1, 8):] | Map(lambda x: (datetime.datetime.strptime(x[:19], '%Y-%m-%d %H:%M:%S'), x[37:])) | list 
+        text = text[min(len(text) - 1, 8):] | Map(lambda x: (datetime.datetime.strptime(x[:19], '%Y-%m-%d %H:%M:%S') - st_time).total_seconds()) | list
         cmt_length = len(text)
         time_length = text[-1] - text[0]
         avg_cmt = round(cmt_length / (time_length / 60),2)
@@ -283,7 +283,7 @@ def main(mode):
             file_size = f"{round(file_size / 1024 , 2)}KB"
         else:
             file_size = f"{file_size}B"
-        cmt_length = max(len(Read(source_path).split('\n')) - 7, 0)
+        cmt_length = max(len(Read(source_path).split('\n')) - 8, 0)
         file_create_time = datetime.datetime.strptime(file_name[6:6+23], '%Y-%m-%d-%H-%M-%S-%f')
         fl.append((file_url, file_html, file_create_time, file_size, cmt_length))
     fl.sort(key = lambda x:x[2], reverse = True)
