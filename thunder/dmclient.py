@@ -4,8 +4,16 @@ from aiohttp import ClientSession
 import random
 import time
 import json
+import sys
 from loguru import logger
+from dmutils import determine_if_cmt_public
 from pipeit import *
+
+class TaskFail(Exception):
+    ...
+
+class TaskAllDone(Exception):
+    ...
 
 class ConfigParser:
 
@@ -41,13 +49,28 @@ class ConfigParser:
 
 class Worker:
 
-    def __init__(self):
-        self.sessid, self.csrf_token, self.buvid = self.init()
+    def __init__(self, logger):
+        self.logger = logger
+        self.built_in_cdn_server = 'http://127.0.0.1:8080/'
+        self.sessid, self.csrf_token, self.buvid, self.server_url, self.working_mode, self.userid,  _ = self.init()
+        if self.server_url[-1] == '/':
+            self.server_url = self.server_url[:-1]
+        self.logger.info("Worker初始化")
+        _msg = "配置文件载入正常" if _ else "配置文件载入失败，初始化配置文件"
+        self.logger.info(_msg)
+        self.logger.info(f"当前协调服务器地址: {self.server_url}")
+        self.logger.info(f"工作模式: {self.working_mode}")
+        self.logger.info(f"用户名: {self.userid}")
+        self.logger.debug(f"SESSDATA: {self.sessid}")
+        self.logger.debug(f"csrf_token: {self.csrf_token}")
+        self.logger.debug(f"buvid: {self.buvid}")
+        self.close = True
         self.loop = None
 
     def init(self):
         file_dir = os.path.dirname(os.path.realpath(__file__))
         cfg_path = os.path.join(file_dir, "config.ini")
+        normal_init_flag = True
 
         try:
             conf = ConfigParser()
@@ -55,6 +78,7 @@ class Worker:
             secrets = conf.items('secrets')
             sessid, csrf_token = secrets['sessid'], secrets['csrf_token']
         except:
+            normal_init_flag = False
             sessid, csrf_token = None, None
 
         assert sessid and csrf_token 
@@ -64,10 +88,39 @@ class Worker:
             secrets = conf.items('secrets')
             buvid = secrets['buvid']
         except:
+            normal_init_flag = False
             buvid = self.create_buvid()
             conf.write(cfg_path, {'buvid': buvid})
 
-        return sessid, csrf_token, buvid
+        try:
+            conf.read(cfg_path)
+            secrets = conf.items('secrets')
+            server = secrets['cdn_server']
+        except:
+            normal_init_flag = False
+            server = self.built_in_cdn_server
+            conf.write(cfg_path, {'cdn_server': server})
+
+        try:
+            conf.read(cfg_path)
+            secrets = conf.items('secrets')
+            mode = secrets['working_mode']
+            assert mode in ('auto', 'specified')
+        except:
+            normal_init_flag = False
+            mode = 'auto'
+            conf.write(cfg_path, {'working_mode': 'auto'})
+
+        try:
+            conf.read(cfg_path)
+            secrets = conf.items('secrets')
+            userid = secrets['userid']
+        except:
+            normal_init_flag = False
+            userid = 'anonymous'
+            conf.write(cfg_path, {'userid': 'anonymous'})
+
+        return sessid, csrf_token, buvid, server, mode, userid, normal_init_flag
 
     def create_buvid(self):
         res = ''
@@ -79,15 +132,15 @@ class Worker:
                 res += '-'
         return res[:-1] + 'infoc'
 
-    async def send_yitiaodanmu(self, session, bvid, cid, msg, progress):
+    async def send_yitiaodanmu(self, session, progress, cid, bvid, msg):
 
-        def check_success(text):
-            r = json.loads(text)
+        def check_success(r):
             if r.get("code") == 0 and isinstance(r.get("data", {}).get("dmid"), int) and r.get("data", {}).get("visible") == True:
                 return True
             return False
 
-        url = 'http://api.bilibili.com/x/v2/dm/post'
+        self.logger.debug("步骤3 - 发送一条弹幕")
+        api_url = 'http://api.bilibili.com/x/v2/dm/post'
         headers = {
             ':authority': 'api.bilibili.com',
             ':method': 'POST',
@@ -130,10 +183,15 @@ class Worker:
         }
         for _ in range(2):
             try:
-                async with session.post(url, data=payload, headers=headers, cookies=cookies) as resp:
+                # api_url = 'https://www.baidu.com'
+                async with session.get(api_url, data=payload, headers=headers, cookies=cookies) as resp:
                     if resp.status == 200:
-                        text = await resp.text()
-                        if check_success(text):
+                        res = json.loads(await resp.text())
+                        # res = await resp.text()
+                        if check_success(res):
+                        # if True:
+                            self.logger.debug(f"步骤3成功 - {bvid}:{msg} - {res}")
+                            # self.logger.debug(f"步骤3成功 - {res[:10]}")
                             return True
                     await asyncio.sleep(10)
             except:
@@ -142,62 +200,110 @@ class Worker:
             return False
 
 
+    async def quest_apply(self, session, query_bvid = None):
+        self.logger.debug("步骤1 - 获取")
+        if self.working_mode == 'specified':
+            assert isinstance(query_bvid, str) # 指定模式下必须输入bvid
+        async with session.get(f'{self.server_url}/api/quest-apply', params={'mode': self.working_mode, 'bvid': str(query_bvid)}) as resp:
+            if resp.status == 200:
+                res = json.loads(await resp.text())
+                if res.get('success') == 1:
+                    values = res.get('data').values()
+                    self.logger.debug(f"步骤1成功 - {values}")
+                    return values
+                self.logger.warning(f"步骤1失败 - {res.get('detail')}")
+            return False
+
+    async def quest_confirm(self, session, bvid, qid, token):
+        self.logger.debug("步骤2 - 确认")
+        async with session.get(f'{self.server_url}/api/quest-confirm', params={'bvid': bvid, 'qid': qid, 'token': token}) as resp:
+            if resp.status == 200:
+                res = json.loads(await resp.text())
+                if res.get('success') == 1:
+                    values = res.get('data').values()
+                    self.logger.debug(f"步骤2成功 - {values}")
+                    return True
+                self.logger.warning(f"步骤2失败 - {res.get('detail')}")
+            return False
+
+    async def declare_succeeded(self, session, bvid, qid, token):
+        self.logger.debug("步骤5 - 回报")
+        async with session.get(f'{self.server_url}/api/quest-success', params={'bvid': bvid, 'qid': qid, 'token': token}) as resp:
+            if resp.status == 200:
+                res = json.loads(await resp.text())
+                if res.get('success') == 1:
+                    values = res.get('data').values()
+                    self.logger.debug(f"步骤5成功 - {values}")
+                    return True
+                self.logger.warning(f"步骤5失败 - {res.get('detail')}")
+            return False
+
     async def standard_process(self):
 
-        async with ClientSession() as session:
-            bvid, cid, msg, progess = await self.query_ask(session)
-            await self.query_confirm(session)
-            res = await self.send_yitiaodanmu(session, bvid, cid, msg, progress)
-            if not res:
-                await asyncio.sleep(30)
-                return False
-            await asyncio.sleep(20)
-            for _ in range(5):
-                status = await self.ask_if_uploaded(session)
-                if status:
-                    break
-                await asyncio.sleep(3)
-            else:
+        try:
+            self.logger.debug("开始一个新的标准投递流程")
+            async with ClientSession() as session:
+                self.working_mode = 'auto'
+                res = await self.quest_apply(session)
+                if res == False:
+                    raise TaskFail()
+                # else
+                qid, progress, cid, bvid, msg, token, bias = res
+                if bias == 0:
+                    raise TaskAllDone()
+                await asyncio.sleep(0.5)
+                res = await self.quest_confirm(session, bvid, qid, token) 
+                if res == False:
+                    raise TaskFail()
+                await asyncio.sleep(0.5)
+                # else
+                res = await self.send_yitiaodanmu(session, progress, cid, bvid, msg)
+                if not res: 
+                    raise TaskFail()
+                # else
+                self.logger.debug(f"步骤4 - 等待和检查")
+                await asyncio.sleep(20)
                 for _ in range(10):
-                    status = await self.ask_if_uploaded(session)
-                    await asyncio.sleep(5)
-                    if status:
+                    status = await determine_if_cmt_public(session, progress, cid, msg)
+                    if status: 
+                        self.logger.debug(f"步骤4检查成功")
                         break
+                    self.logger.debug(f"步骤4第{_+1}次获取失败")
+                    await asyncio.sleep(5)
                 else:
-                    return False
-            await self.declare_success(session)
-            await asyncio.sleep(5)
+                    raise TaskFail()
+                res = await self.declare_succeeded(session, bvid, qid, token)
+                if not res:
+                    raise TaskFail()
+                await asyncio.sleep(5)
+        except TaskFail:
+            self.logger.info(f"投递失败，流程结束")
+            await asyncio.sleep(30)
+        except TaskAllDone:
+            return True
 
+    async def run_daemon(self):
+
+        while True:
+            all_task_done = await self.standard_process()
+            if all_task_done:
+                self.logger.info(f"接收到全局结束信号，没有新的弹幕，线程退出")
+                self.close = True
 
     async def run_start(self):
         self.loop = asyncio.get_running_loop()
 
-        
-
+        self.loop.create_task(self.run_daemon())
         while True:
             try:
-                await asyncio.sleep(3600)
+                if self.close:
+                    self.logger.info("程序结束")
+                    break
+                await asyncio.sleep(3)
             except KeyboardInterrupt:
                 return
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-asyncio.get_event_loop().run_until_complete(Worker().run_start())
+logger.remove()
+sys.stdout.reconfigure(encoding='utf-8', errors='backslashreplace')
+logger.add(sys.stdout, level='DEBUG')
+asyncio.get_event_loop().run_until_complete(Worker(logger).run_start())

@@ -4,7 +4,9 @@ import os
 import datetime
 import hashlib
 import re
-from sqlalchemy import Column, Integer, String, DateTime, String, SmallInteger, text
+import random
+import time
+from sqlalchemy import Column, Integer, String, DateTime, String, SmallInteger, text, Boolean
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import declarative_base, sessionmaker, Session, selectinload
 from sqlalchemy.engine.url import URL
@@ -14,6 +16,7 @@ from sqlalchemy.schema import UniqueConstraint
 from collections import deque
 from aiohttp import ClientSession
 from lxml import etree
+from dmutils import char_scaner, determine_if_cmt_public
 from pipeit import *
 
 
@@ -32,6 +35,7 @@ class AbstractTable(Base):
     cid = Column(String(20), index=True, nullable=False, default="")
     status = Column(SmallInteger, index=True, nullable=False, default=0)
     fail_count = Column(SmallInteger, nullable=False, default=0)
+    rnd = Column(Integer, nullable=False, default=0)
 
 '''
 状态:
@@ -49,6 +53,23 @@ class BVRelations(Base):
     tname = Column(String(50), unique=True, nullable=False)
     bvid = Column(String(20), unique=True, nullable=False, default="")
     UniqueConstraint('tname', 'bvid', name='uix_1')
+
+class BVStatus(Base):
+    __tablename__ = 'bv_status'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    bvid = Column(String(20), unique=True, nullable=False, default="")
+    create_time = Column(DateTime, nullable=False)
+    finished = Column(Boolean, nullable=False, default=False)
+
+class Contributors(Base):
+    __tablename__ = 'contributors'
+
+    uid = Column(Integer, primary_key=True, autoincrement=True)
+    uname = Column(String(16), unique=True, nullable=False, default="")
+    last_update_time = Column(DateTime, nullable=False)
+    total_count = Column(Integer, index=True, nullable=False, default=1)
+    total_chars = Column(Integer, nullable=False, default=1)
 
 
 def table_for_txt(file_name: str, exists: bool = False):
@@ -87,7 +108,7 @@ async def scan_and_init(engine):
             ))
         )
 
-    def log_parser2(log_time, bvid, cids, prefixs, contents): # input log_parser's output
+    def log_parser2(create_time, bvid, cids, prefixs, contents): # input log_parser's output
         try:
             assert len(cids) == len(prefixs)
             for item in prefixs:
@@ -98,8 +119,9 @@ async def scan_and_init(engine):
             return None, None, False
         res = []
         for item in contents:
-            item['send_time'] = int((item['cmt_time'] - log_time).total_seconds() * 1000)
+            item['send_time'] = int((item['cmt_time'] - create_time).total_seconds() * 1000)
             item['bvid'] = bvid
+            item['rnd'] = random.randint(0,1e6)
         for cid, (time_cut, fixer) in zip(cids, prefixs):
             time_cut = time_cut * 1000
             for item in contents:
@@ -111,8 +133,8 @@ async def scan_and_init(engine):
                 res.append(contents.popleft())
             for item in contents:
                 item['send_time'] = item['send_time'] - time_cut
-        if res: return res, bvid, True
-        else: return res, bvid, False
+        if res: return res, bvid, create_time, True
+        else: return res, bvid, create_time, False
 
     data_dir = os.path.abspath('../data/')
     for files in os.walk(data_dir):
@@ -135,8 +157,10 @@ async def scan_and_init(engine):
         for file_name, table in zip(files, tables):
             file_path = os.path.join(data_dir, file_name)
             async with aiofiles.open(file_path, 'r', encoding='utf-8') as f:
-                contents, bvid, _ = log_parser2(*log_parser(await f.read()))
+                contents, bvid, create_time, _ = log_parser2(*log_parser(await f.read()))
                 if not _: continue
+            stmt = insert(BVStatus).values({'bvid': bvid, 'create_time': create_time}).on_conflict_do_update(index_elements=['bvid'], set_={'create_time': create_time})
+            await session.execute(stmt)
             stmt = insert(BVRelations).values({'bvid': bvid, 'tname': file_name[:29]}).on_conflict_do_nothing() # 应加入过期清除机制
             await session.execute(stmt)
                 
@@ -186,87 +210,109 @@ async def clean_task_daemon(engine, msg_core):
 
 class DAL:
 
+    _table_proj = {}
+
     def __init__(self, db_session: Session, msg_core):
         self.session = db_session
-        self.table_porj = {}
-        self.char_scaner = re.compile('[\u3002\uff1b\uff0c\uff1a\u201c\u201d\uff08\uff09\u3001\uff1f\u300a\u300b\u4E00-\u9FA5\x00-\x7f]+')
+        self.table_porj = self.__class__._table_proj
         self.msg_core = msg_core
+        self.create_token = lambda x: hashlib.sha1(x.encode('utf-8')).hexdigest()[:8]
         self.loop = asyncio.get_running_loop()
 
 
-    async def get_archive_earliest(self, bvid: str):
-        table = self.table_porj.get(bvid)
-        if not table:
-            stmt = select(BVRelations).where(BVRelations.bvid == bvid).order_by(BVRelations.tname.desc()).limit(1)
-            item = (await self.session.execute(stmt)).scalars().first()
-            if not item:
-                # 错误的bvid
-                return None
-            table = table_for_txt(item.tname, 1)
+    async def get_archive_earliest(self, mode: str, bvid: str):
+        '''
+        返回True代表没有任务
+        返回None代表失败
+        返回tuple代表正常任务
+        '''
+        if mode == 'specified':
+            table = self.table_porj.get(bvid)
+            if not table:
+                stmt = select(BVRelations).where(BVRelations.bvid == bvid).order_by(BVRelations.tname.desc()).limit(1)
+                rlitem = (await self.session.execute(stmt)).scalars().first()
+                if not rlitem:
+                    # 错误的bvid
+                    return -4
+                table = table_for_txt(rlitem.tname, 1)
+                self.table_porj[bvid] = table
+        else:
+            # mode = 'auto'
+            stmt = select(BVRelations).filter(BVStatus.finished==False).filter(BVStatus.bvid==BVRelations.bvid).order_by(BVStatus.create_time.desc()).limit(1)
+            rlitem = (await self.session.execute(stmt)).scalars().first()
+            if rlitem == None:
+                # 所有工作均已完成
+                return True
+            table = table_for_txt(rlitem.tname, 1)
+            bvid = rlitem.bvid
             self.table_porj[bvid] = table
         stmt = select(table).where(table.status < 4).order_by(table.cmt_time).limit(1)
         item = (await self.session.execute(stmt)).scalars().first()
         if item:
-            self.msg_core[f"{tname}-{id}"] = time.time()
-            return (item.id, item.send_time, item.cid, item.bvid, item.content)
-        return None
+            self.msg_core[f"{rlitem.tname}-{item.id}"] = time.time() # 标记任务开始时间
+            return (
+                item.id, 
+                item.send_time, 
+                item.cid, 
+                item.bvid, 
+                item.content, 
+                self.create_token(f"{item.send_time}-{item.rnd}"),
+                1 # 补位为0表示无任务
+            ) 
+        return True
 
-    async def client_confirm_quest(self, bvid: str, id: int):
+    async def client_confirm_quest(self, bvid: str, qid: int, token: str):
         table = self.table_porj.get(bvid)
         if not table:
             return -2
-        stmt = select(table).where(table.id == id)
+        stmt = select(table).where(table.id == qid)
         item = (await self.session.execute(stmt)).scalars().first()
         if item and item.status == 0:
-            item.status = 1
-            await self.session.commit()
-            return True
+            if self.create_token(f"{item.send_time}-{item.rnd}")==token:
+                item.status = 1
+                await self.session.commit()
+                return True
+            else:
+                return -3
         else:
             return -1
 
-    async def client_declare_succeeded(self, bvid: str, id: int, wdcr: str):
+    async def client_declare_succeeded(self, bvid: str, qid: int, token: str, wdcr: str):
         table = self.table_porj.get(bvid)
         if not table:
             return -2
-        stmt = select(table).where(table.id == id)
+        stmt = select(table).where(table.id == qid)
         item = (await self.session.execute(stmt)).scalars().first()
         if item and item.status == 1:
-            item.status = 2
-            await self.session.commit()
-            async with ClientSession() as session:
-                for _ in range(3):
-                    async with session.get(f"http://comment.bilibili.com/{item.cid}.xml") as resp:
-                        if resp.status == 200:
-                            text = await resp.text()
-                            if len(text) > 1.5e6:
-                                return -9
-                            if self.determine_if_cmt_exists(item, text):
-                                item.status = 3
-                                await self.session.commit()
-                                return True 
-                            else:
-                                return -6
-                else:
-                    item.fail_count = item.fail_count + 1
-                    item.status = 0
-                    if item.fail_count >= 3:
-                        item.status = 4
-                    await self.session.commit()
-                    return -12
-                    
-
-    def determine_if_cmt_exists(self, item: 'itme->table', xml):
-        target = self.char_scaner.search(item.content)
-        if not target:
-            return False
-        target = target.group()
-        target_time = item.send_time / 1000
-        try:
-            tree = etree.fromstring(xml.encode('utf-8')).xpath('/i')[0]
-            for node in tree:
-                if node.tag == 'd':
-                    if abs(float(node.get('p').split(',')[0]) - target_time) < 1 and self.char_scaner.search(node.text).group() == target:
-                        return True 
-            return False
-        except:
-            raise
+            if self.create_token(f"{item.send_time}-{item.rnd}")!=token:
+                return -3
+            else:
+                async with ClientSession() as http_session:
+                    for _ in range(2):
+                        res = await determine_if_cmt_public(http_session, item.send_time, item.cid, item.content)
+                        if res:break
+                        if _ == 0: await asyncio.sleep(3)
+                    else:
+                        res = False
+                    if res:
+                        item.status = 3
+                        stmt = select(Contributors.uid).where(Contributors.uname == wdcr).limit(1)
+                        person = (await self.session.execute(stmt)).scalars().first()
+                        _ctime = datetime.datetime.now() + datetime.timedelta(seconds=3600)
+                        if person:
+                            person.total_count += 1
+                            person.total_chars += len(item.content)
+                            person.last_update_time = _ctime
+                            await self.session.commit()
+                        else:
+                            self.session.add(Contributors(uname=wdcr, last_update_time=_ctime))
+                        return True
+                    else:
+                        item.fail_count = item.fail_count + 1
+                        item.status = 0
+                        if item.fail_count >= 3:
+                            item.status = 4
+                        await self.session.commit()
+                        return -5
+        else:
+            return -1
