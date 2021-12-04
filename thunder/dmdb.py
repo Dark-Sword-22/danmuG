@@ -21,8 +21,20 @@ from dmutils import char_scaner, determine_if_cmt_public
 from hmac import compare_digest
 from pipeit import *
 
+class BaseModel:
 
-Base = declarative_base()
+    @classmethod
+    def get_model_by_table_name(cls, table_name):
+        registry_instance = getattr(cls, "registry")
+        for mapper_ in registry_instance.mappers:
+            model = mapper_.class_
+            model_class_name = model.__tablename__
+            if model_class_name == table_name:
+                return model
+
+
+Base = declarative_base(cls=BaseModel)
+GlobLock = asyncio.Lock()
 
 
 class AbstractTable(Base):
@@ -73,30 +85,44 @@ class Contributors(Base):
     total_count = Column(Integer, index=True, nullable=False, default=1)
     total_chars = Column(Integer, nullable=False, default=1)
 
+async def scan_and_reload(engine):
 
-def table_for_txt(file_name: str, exists: bool = False):
-    if exists:
-        return type(file_name, (AbstractTable, ), {'__tablename__': file_name, '__table_args__': {'extend_existing': True}})
-    return type(file_name, (AbstractTable, ), {'__tablename__': file_name})
+    def _get(x):
+        return x[x.index(':')+1:].strip()
 
-async def scan_and_init(engine):
+    def valid_check(cids, prefixs, bvid):
+        try:
+            assert len(cids) == len(prefixs)
+            for item in prefixs:
+                assert isinstance(item, list)
+                for _ in item:
+                    assert isinstance(_, int)
+            assert len(bvid) > 0
+            assert len(cids) > 0
+            assert len(prefixs) > 0
+            return True
+        except:
+            return False
+
+    def load_basic_status(list_of_strings):
+        bvid = _get(list_of_strings[3])
+        if len(bvid) > 5: bvid = bvid[len(bvid) - bvid[::-1].index('/'):]
+        else: bvid = ''
+        cids = _get(list_of_strings[4])
+        if len(cids) > 5: cids = json.loads(cids) | Map(lambda x: str(x)) | list
+        else: cids = []
+        prefixs = _get(list_of_strings[5])
+        if len(prefixs) > 5: prefixs = json.loads(prefixs)
+        else: prefixs = []
+        return bvid, cids, prefixs
 
     def log_parser(string):
         '''
         前置的数据清洗抽象，根据记录格式做出适配
         '''
-        _get = lambda x: x[x.index(':')+1:].strip()
         logs = string.split('\n')
-        bvid = _get(logs[3])
-        if len(bvid) > 5: bvid = bvid[len(bvid) - bvid[::-1].index('/'):]
-        else: bvid = ''
-        cids = _get(logs[4])
-        if len(cids) > 5: cids = json.loads(cids) | Map(lambda x: str(x)) | list
-        else: cids = []
-        prefixs = _get(logs[5])
-        if len(prefixs) > 5: prefixs = json.loads(prefixs)
-        else: prefixs = []
-        return (
+        bvid, cids, prefixs = load_basic_status(logs)
+        res = (
             datetime.datetime.strptime(logs[2][logs[2].index(':')+2:], '%Y-%m-%d %H:%M:%S.%f'), 
             bvid,
             cids,
@@ -108,30 +134,17 @@ async def scan_and_init(engine):
                     lambda x: dict(zip(
                         ('cmt_time', 'content'),  (datetime.datetime.strptime(x[:23], '%Y-%m-%d %H:%M:%S.%f'), x[37:37+80])
                     ))
-                )
-                | Filter(
-                    lambda x: x.setdefault(
-                        "hash", 
-                        hashlib.sha1(f"{int(x['cmt_time'].timestamp()*1e3)}{x['content']}".encode('utf-8')).hexdigest()
-                    )
-                    
                 ),
                 key = lambda x: x['cmt_time'], 
             ))
         )
+        for item in res[4]:
+            item["hash"] = hashlib.sha1(f"{int(item['cmt_time'].timestamp()*1e3)}{item['content']}".encode('utf-8')).hexdigest()
+        return res
 
     def log_parser2(create_time, bvid, cids, prefixs, contents): # input log_parser's output
-        try:
-            assert len(cids) == len(prefixs)
-            for item in prefixs:
-                assert isinstance(item, list)
-                for _ in item:
-                    assert isinstance(_, int)
-            assert len(bvid) > 0
-            assert len(cids) > 0
-            assert len(prefixs) > 0
-        except:
-            return None, None, False
+        if not valid_check(cids, prefixs, bvid):
+            return None, None, None, False
         res = []
         for item in contents:
             item['send_time'] = int((item['cmt_time'] - create_time).total_seconds() * 1000)
@@ -161,48 +174,61 @@ async def scan_and_init(engine):
     files.sort(key = lambda x: datetime.datetime.strptime(x[6:6+23], '%Y-%m-%d-%H-%M-%S-%f'), reverse = True)
     if len(files) > 22*2: files = files[:22*2]
 
-    tables = [table_for_txt(file_name[:29]) for file_name in files]
+    files_legal = []
+    for file_name in files:
+        file_path = os.path.join(data_dir, file_name)
+        async with aiofiles.open(file_path, 'r', encoding='utf-8') as f:
+            contents, bvid, create_time, _ = log_parser2(*log_parser(await f.read()))
+            if not _: continue
+            files_legal.append(file_name)
+
+    tables = [
+        Base.get_model_by_table_name(file_name) if Base.get_model_by_table_name(file_name) else \
+        type(file_name, (AbstractTable, ), {'__tablename__': file_name}) \
+        for file_name in files_legal | Map(lambda x:x[:29])
+    ]
 
     async with engine.begin() as conn:
         # await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
 
-    async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
-    async with async_session() as session:
-        for file_name, table in zip(files, tables):
-            file_path = os.path.join(data_dir, file_name)
-            async with aiofiles.open(file_path, 'r', encoding='utf-8') as f:
-                contents, bvid, create_time, _ = log_parser2(*log_parser(await f.read()))
-                if not _: continue
-            stmt = insert(BVStatus).values({'bvid': bvid, 'create_time': create_time}).on_conflict_do_update(index_elements=['bvid'], set_={'create_time': create_time})
-            await session.execute(stmt)
-            stmt = insert(BVRelations).values({'bvid': bvid, 'tname': file_name[:29]}).on_conflict_do_nothing() # 应加入过期清除机制
-            await session.execute(stmt)
+    for file_name, table in zip(files_legal, tables):
+        async with GlobLock:
+            async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+            async with async_session() as session:
+                file_path = os.path.join(data_dir, file_name)
+                async with aiofiles.open(file_path, 'r', encoding='utf-8') as f:
+                    contents, bvid, create_time, _ = log_parser2(*log_parser(await f.read()))
+                    if not _: continue
 
-            stmt = select(table.hash)
-            table_content = (await session.execute(select(table))).scalars().all()
-            result_hash_set = table_content | Map(lambda x: f"{x.hash}-{x.cid}-{x.send_time}") | set 
-            contents_hash_set = contents | Map(lambda x: x.setdefault('unique', f"{x['hash']}-{x['cid']}-{x['send_time']}")) | set
-            update_set = contents_hash_set.difference(result_hash_set)
-            remove_set = result_hash_set.difference(contents_hash_set)
-            _step = 1000
+                stmt = insert(BVStatus).values({'bvid': bvid, 'create_time': create_time}).on_conflict_do_update(index_elements=['bvid'], set_={'create_time': create_time})
+                await session.execute(stmt)
+                stmt = insert(BVRelations).values({'bvid': bvid, 'tname': file_name[:29]}).on_conflict_do_nothing()
+                await session.execute(stmt)
 
-            # Remove
-            remove_items = table_content | Filter(lambda x: f"{x.hash}-{x.cid}-{x.send_time}" in remove_set)
-            for _ in range(0, len(table_content), _step):
-                remove_ids = [x.id for _, x in zip(range(_step), remove_items)]
-                if remove_ids:
-                    stmt = delete(table).where(table.id.in_(remove_ids))
-                    await session.execute(stmt)
-            # Insert
-            for _ in range(0, len(contents), _step): # orm不到位，自主切不明白
-                _wrap = lambda x, y: y
-                _tup = contents[_:_+_step] | Filter(lambda x: x['unique'] in update_set) | Map(lambda x: _wrap(x.pop('unique'),x)) | tuple
-                if _tup:
-                    stmt = insert(table).values(_tup).on_conflict_do_nothing() if _tup else text("select 1")
-                    await session.execute(stmt)
-            
-        await session.commit()
+                stmt = select(table.hash)
+                table_content = (await session.execute(select(table))).scalars().all()
+                result_hash_set = table_content | Map(lambda x: f"{x.hash}-{x.cid}-{x.send_time}") | set 
+                contents_hash_set = contents | Map(lambda x: x.setdefault('unique', f"{x['hash']}-{x['cid']}-{x['send_time']}")) | set
+                update_set = contents_hash_set.difference(result_hash_set)
+                remove_set = result_hash_set.difference(contents_hash_set)
+                _step = 1000
+
+                # Remove
+                remove_items = table_content | Filter(lambda x: f"{x.hash}-{x.cid}-{x.send_time}" in remove_set)
+                for _ in range(0, len(table_content), _step):
+                    remove_ids = [x.id for _, x in zip(range(_step), remove_items)]
+                    if remove_ids:
+                        stmt = delete(table).where(table.id.in_(remove_ids))
+                        await session.execute(stmt)
+                # Insert
+                for _ in range(0, len(contents), _step): # orm不到位，自主切不明白
+                    _wrap = lambda x, y: y
+                    _tup = contents[_:_+_step] | Filter(lambda x: x['unique'] in update_set) | Map(lambda x: _wrap(x.pop('unique'),x)) | tuple
+                    if _tup:
+                        stmt = insert(table).values(_tup).on_conflict_do_nothing() if _tup else text("select 1")
+                        await session.execute(stmt)  
+                await session.commit()
 
 async def clean_task_daemon(engine, msg_core):
     while True:
@@ -212,13 +238,14 @@ async def clean_task_daemon(engine, msg_core):
             table_names_to_check = set((await session.execute(stmt)).scalars().all())
             table_to_check = AbstractTable.__subclasses__() | Filter(lambda x: x.__tablename__ in table_names_to_check) | list
         for table in table_to_check:
-            async with asyncio.Lock():
+            async with GlobLock:
                 async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
                 async with async_session() as session:
                     hit = (await session.execute(select(table).where(table.status < 3).limit(1))).scalars().all()
                     if not hit:
                         stmt = update(BVStatus).where(BVStatus.bvid == select(BVRelations.bvid).where(BVRelations.tname == table.__tablename__).limit(1)).values(finished = True)
                         await session.execute(stmt, execution_options={"synchronize_session": 'fetch'})
+                        await session.commit()
                         continue
                     latest_update = (await session.execute(select(table.id).where(table.status >= 3).order_by(table.cmt_time.desc()).limit(1))).scalars().first()
                     if latest_update:
@@ -236,7 +263,7 @@ async def clean_task_daemon(engine, msg_core):
 
 async def task_status_daemon(engine, table, qid):
     await asyncio.sleep(180)
-    async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    async_session = sessionmaker(engine, expire_on_commit=True, class_=AsyncSession)
     async with async_session() as session:
         item = (await session.execute(select(table).where(table.id == qid))).scalars().first()
         if item:
@@ -244,6 +271,8 @@ async def task_status_daemon(engine, table, qid):
                 item.fail_count += 1
                 if item.fail_count >= 2:
                     item.status = 4
+                else:
+                    item.status = 0
         # table finished?
         unfinished_items = (await session.execute(select(table).where(table.status < 3).limit(1))).scalars().all()
         if not unfinished_items:
@@ -274,7 +303,9 @@ class DAL:
                 if not rlitem:
                     # 错误的bvid
                     return -4
-                table = table_for_txt(rlitem.tname, 1)
+                table = Base.get_model_by_table_name(rlitem.tname)
+                if table == None:
+                    return -4
                 self.table_porj[bvid] = table
         else:
             # mode = 'auto'
@@ -283,7 +314,9 @@ class DAL:
             if rlitem == None:
                 # 所有工作均已完成
                 return True
-            table = table_for_txt(rlitem.tname, 1)
+            table = Base.get_model_by_table_name(rlitem.tname)
+            if table == None:
+                return -4
             bvid = rlitem.bvid
             self.table_porj[bvid] = table
 

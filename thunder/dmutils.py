@@ -98,3 +98,17 @@ def load_webhook_secret():
         Write(cfg_path, '[secrets]\n\n')
         conf.write(cfg_path, {'webhook_secret': webhook_secret})
     return webhook_secret
+
+async def git_pull(self):
+    self.logger.debug("Git pull triggered")
+    # return
+    def wraper():
+        try:
+            os.system("git checkout .")
+            os.system("git fetch --all")
+            os.system("git reset --hard origin/main")
+            os.system("git pull")
+        except:
+            ...
+    await self.loop.run_in_executor(None, wraper)
+    self.logger.info("Git pulled")

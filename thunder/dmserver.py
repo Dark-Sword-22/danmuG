@@ -9,7 +9,7 @@ from fastapi import FastAPI, Request, Header
 from fastapi.responses import ORJSONResponse
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from dmutils import AsyncIteratorWrapper, load_webhook_secret
+from dmutils import AsyncIteratorWrapper, load_webhook_secret, git_pull
 from dmdb import *
 
 
@@ -19,7 +19,7 @@ app = FastAPI()
 # )
 
 
-sqlite_db = {'drivername': 'sqlite+aiosqlite', 'database': 'test.db'}
+sqlite_db = {'drivername': 'sqlite+aiosqlite', 'database': 'sqlite.db'}
 engine = create_async_engine(URL.create(**sqlite_db), echo=True, future=True, connect_args={"check_same_thread": False})
 
 error_codes = [
@@ -39,7 +39,7 @@ webhook_secret = load_webhook_secret()
 
 @app.on_event("startup")
 async def startup():
-    await scan_and_init(engine)
+    await scan_and_reload(engine)
     loop = asyncio.get_running_loop()
     loop.create_task(clean_task_daemon(engine, msg_core))
 
@@ -64,7 +64,7 @@ async def response_logger_hacking(request: Request, call_next):
 
 @app.get("/api/quest-apply", response_class=ORJSONResponse)
 async def get_archive_earliest(mode: Literal["auto", "specified"], bvid: Optional[str] = None) -> dict:
-    async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    async_session = sessionmaker(engine, expire_on_commit=True, class_=AsyncSession)
     async with async_session() as session:
         async with session.begin():
             dal = DAL(engine, session, msg_core)
@@ -80,7 +80,7 @@ async def get_archive_earliest(mode: Literal["auto", "specified"], bvid: Optiona
 
 @app.get("/api/quest-confirm", response_class=ORJSONResponse)
 async def client_confirm_quest(bvid: str, qid: int, token: str) -> dict:
-    async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    async_session = sessionmaker(engine, expire_on_commit=True, class_=AsyncSession)
     async with async_session() as session:
         async with session.begin():
             dal = DAL(engine, session, msg_core)
@@ -98,7 +98,7 @@ async def client_declare_succeeded(bvid: str, qid: int, token: str, wdcr: str = 
         wdcr = random.sample(('神秘好哥哥', '缺神'), 1)[0]
     if len(wdcr) > 15:
         wdcr = wdcr[:15]
-    async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    async_session = sessionmaker(engine, expire_on_commit=True, class_=AsyncSession)
     async with async_session() as session:
         async with session.begin():
             dal = DAL(engine, session, msg_core)
@@ -120,7 +120,11 @@ async def github_webhook_activated(req: Request, X_Hub_Signature_256: Optional[s
     payload = await req.body()
     res = hmac.compare_digest(hmac.new('secret'.encode(), payload , digestmod = sha256).hexdigest(), X_Hub_Signature_256[8:])
     if res:
-        ...
+        default_logger.info("Git push webhook trigered")
+        await git_pull()
+        default_logger.info("Git pulled")
+        await scan_and_reload(engine)
+        default_logger.info("Engine finish update")
     return {'success': 0, 'data': {'assertion result': res}}
 
 
