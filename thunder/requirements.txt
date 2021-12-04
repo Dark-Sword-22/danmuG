@@ -2,3 +2,7 @@ fastapi
 uvicorn[standard]
 gunicorn
 uvloop
+orjson
+sqlalchemy
+aiofiles
+aiosqlite

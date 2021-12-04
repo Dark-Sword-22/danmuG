@@ -38,10 +38,10 @@ class ConfigParser:
 
     def getsession(self, session):
         x = self.text[self.text.index(f"[{session}]\n") + len(session) + 3:]
-        try:
-            x2 = x[:x.index('[')]
-        except:
-            x2 = ''
+        # try:
+        #     x2 = x[:x.index('[')]
+        # except:
+        x2 = ''
         return  (x + x2).strip()
 
     def items(self, session):

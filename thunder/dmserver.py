@@ -9,14 +9,22 @@ from fastapi import FastAPI, Request, Header
 from fastapi.responses import ORJSONResponse
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from dmutils import AsyncIteratorWrapper, load_webhook_secret, git_pull
+from dmutils import AsyncIteratorWrapper, load_webhook_secret, git_pull, ConfigParser
 from dmdb import *
 
+file_dir = os.path.dirname(os.path.realpath(__file__))
+cfg_path = os.path.join(file_dir, "server_config.ini")
+conf = ConfigParser()
+conf.read(cfg_path)
+secrets = conf.items('secrets')
+trust_list = json.loads(secrets['trust_list'].encode())
+dev = json.loads(secrets['dev'].encode())
+host = json.loads(secrets['host'].encode())
+port = json.loads(secrets['port'].encode())
 
-app = FastAPI()
-# app.add_middleware(
-#     TrustedHostMiddleware, allowed_hosts=["example.com", "*.example.com"]
-# )
+app = FastAPI(docs_url='/doc' if dev else None, redoc_url=None)
+if not dev: 
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=trust_list)
 
 
 sqlite_db = {'drivername': 'sqlite+aiosqlite', 'database': 'sqlite.db'}
@@ -132,4 +140,4 @@ if __name__ == '__main__':
     log_config = uvicorn.config.LOGGING_CONFIG
     log_config["formatters"]["default"]["fmt"] = "[%(asctime)s] | %(levelname)s | %(message)s"
     log_config["formatters"]["access"]["fmt"] = "[%(asctime)s] | %(levelname)s | %(message)s"
-    uvicorn.run("dmserver:app", port=8080, host='127.0.0.1', log_config=log_config) 
+    uvicorn.run("dmserver:app", port=port, host=host, log_config=log_config) 
