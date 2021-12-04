@@ -8,16 +8,17 @@ import random
 import time
 import json
 from sqlalchemy import Column, Integer, String, DateTime, String, SmallInteger, text, Boolean
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import declarative_base, sessionmaker, Session, selectinload
 from sqlalchemy.engine.url import URL
-from sqlalchemy.future import select
 from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.schema import UniqueConstraint
 from collections import deque
 from aiohttp import ClientSession
 from lxml import etree
 from dmutils import char_scaner, determine_if_cmt_public
+from hmac import compare_digest
 from pipeit import *
 
 
@@ -137,7 +138,6 @@ async def scan_and_init(engine):
             item['bvid'] = bvid
             item['rnd'] = random.randint(0,1e6)
         for cid, (time_cut, fixer) in zip(cids, prefixs):
-            print(cid, time_cut, fixer)
             time_cut = time_cut * 1000
             for item in contents:
                 item['send_time'] = int(item['send_time'] + fixer * 1000)
@@ -164,7 +164,7 @@ async def scan_and_init(engine):
     tables = [table_for_txt(file_name[:29]) for file_name in files]
 
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+        # await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
 
     async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
@@ -178,18 +178,30 @@ async def scan_and_init(engine):
             await session.execute(stmt)
             stmt = insert(BVRelations).values({'bvid': bvid, 'tname': file_name[:29]}).on_conflict_do_nothing() # 应加入过期清除机制
             await session.execute(stmt)
-                
+
             stmt = select(table.hash)
-            result_hash_set = set((await session.execute(stmt)).scalars().all())
-            contents_hash_set = contents | Map(lambda x: x['hash']) | set
+            table_content = (await session.execute(select(table))).scalars().all()
+            result_hash_set = table_content | Map(lambda x: f"{x.hash}-{x.cid}-{x.send_time}") | set 
+            contents_hash_set = contents | Map(lambda x: x.setdefault('unique', f"{x['hash']}-{x['cid']}-{x['send_time']}")) | set
             update_set = contents_hash_set.difference(result_hash_set)
             remove_set = result_hash_set.difference(contents_hash_set)
-
             _step = 1000
+
+            # Remove
+            remove_items = table_content | Filter(lambda x: f"{x.hash}-{x.cid}-{x.send_time}" in remove_set)
+            for _ in range(0, len(table_content), _step):
+                remove_ids = [x.id for _, x in zip(range(_step), remove_items)]
+                if remove_ids:
+                    stmt = delete(table).where(table.id.in_(remove_ids))
+                    await session.execute(stmt)
+            # Insert
             for _ in range(0, len(contents), _step): # orm不到位，自主切不明白
-                _tup = contents[_:_+_step] | Filter(lambda x: x['hash'] in update_set) | tuple
-                stmt = insert(table).values(_tup).on_conflict_do_nothing() if _tup else text("select 1")
-                await session.execute(stmt)
+                _wrap = lambda x, y: y
+                _tup = contents[_:_+_step] | Filter(lambda x: x['unique'] in update_set) | Map(lambda x: _wrap(x.pop('unique'),x)) | tuple
+                if _tup:
+                    stmt = insert(table).values(_tup).on_conflict_do_nothing() if _tup else text("select 1")
+                    await session.execute(stmt)
+            
         await session.commit()
 
 async def clean_task_daemon(engine, msg_core):
@@ -235,13 +247,10 @@ class DAL:
 
 
     async def get_archive_earliest(self, mode: str, bvid: str):
-        '''
-        返回True代表没有任务
-        返回None代表失败
-        返回tuple代表正常任务
-        '''
         if mode == 'specified':
             table = self.table_porj.get(bvid)
+            if bvid=='None':
+                return -4
             if not table:
                 stmt = select(BVRelations).where(BVRelations.bvid == bvid).order_by(BVRelations.tname.desc()).limit(1)
                 rlitem = (await self.session.execute(stmt)).scalars().first()
@@ -260,9 +269,10 @@ class DAL:
             table = table_for_txt(rlitem.tname, 1)
             bvid = rlitem.bvid
             self.table_porj[bvid] = table
-        stmt = select(table).where(table.status < 4).order_by(table.cmt_time).limit(1)
-        item = (await self.session.execute(stmt)).scalars().first()
-        if item:
+        stmt = select(table).where(table.status == 0).order_by(table.cmt_time).limit(44)
+        item_set = (await self.session.execute(stmt)).scalars().all()
+        if item_set:
+            item = random.sample(item_set, 1)[0]
             self.msg_core[f"{rlitem.tname}-{item.id}"] = time.time() # 标记任务开始时间
             return (
                 item.id, 
@@ -282,7 +292,7 @@ class DAL:
         stmt = select(table).where(table.id == qid)
         item = (await self.session.execute(stmt)).scalars().first()
         if item and item.status == 0:
-            if self.create_token(f"{item.send_time}-{item.rnd}")==token:
+            if compare_digest(self.create_token(f"{item.send_time}-{item.rnd}"), token):
                 item.status = 1
                 await self.session.commit()
                 return True
@@ -298,7 +308,7 @@ class DAL:
         stmt = select(table).where(table.id == qid)
         item = (await self.session.execute(stmt)).scalars().first()
         if item and item.status == 1:
-            if self.create_token(f"{item.send_time}-{item.rnd}")!=token:
+            if not compare_digest(self.create_token(f"{item.send_time}-{item.rnd}"), token):
                 return -3
             else:
                 async with ClientSession() as http_session:
@@ -310,7 +320,7 @@ class DAL:
                         res = False
                     if res:
                         item.status = 3
-                        stmt = select(Contributors.uid).where(Contributors.uname == wdcr).limit(1)
+                        stmt = select(Contributors).where(Contributors.uname == wdcr).limit(1)
                         person = (await self.session.execute(stmt)).scalars().first()
                         _ctime = datetime.datetime.now() + datetime.timedelta(seconds=3600)
                         if person:
@@ -324,7 +334,7 @@ class DAL:
                     else:
                         item.fail_count = item.fail_count + 1
                         item.status = 0
-                        if item.fail_count >= 3:
+                        if item.fail_count >= 2:
                             item.status = 4
                         await self.session.commit()
                         return -5

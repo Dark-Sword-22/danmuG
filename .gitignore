@@ -133,4 +133,4 @@ dmypy.json
 log*
 chrome*
 *.db
-config*ini
+*config*ini

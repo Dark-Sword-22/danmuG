@@ -6,8 +6,10 @@ import time
 import json
 import sys
 from loguru import logger
-from dmutils import determine_if_cmt_public
+from dmutils import determine_if_cmt_public, ConfigParser
 from pipeit import *
+
+MIN_INTERVAL = 29
 
 class TaskFail(Exception):
     ...
@@ -15,56 +17,27 @@ class TaskFail(Exception):
 class TaskAllDone(Exception):
     ...
 
-class ConfigParser:
-
-    def __init__(self):
-        self.text = ''
-
-    def read(self, cfg_path):
-        self.text = Read(cfg_path)
-        return self
-
-    def write(self, cfg_path, data):
-        self.text = Read(cfg_path).strip()
-        self.text += '\n'
-        for k, v in data.items():
-            self.text += f"{k}={v}\n"
-        Write(cfg_path, self.text)
-
-    def getsession(self, session):
-        x = self.text[self.text.index(f"[{session}]\n") + len(session) + 3:]
-        try:
-            x2 = x[:x.index('[')]
-        except:
-            x2 = ''
-        return  (x + x2).strip()
-
-    def items(self, session):
-        _session_cont = self.getsession(session)
-        _session_cont = _session_cont.split('\n') | Map(lambda x:x.strip()) | Filter(lambda x:x!='') | list
-        res = {}
-        for _ in _session_cont:
-            res[_[:_.index('=')]] = _[_.index('=')+1:]
-        return res
-
 class Worker:
 
     def __init__(self, logger):
         self.logger = logger
         self.built_in_cdn_server = 'http://127.0.0.1:8080/'
-        self.sessid, self.csrf_token, self.buvid, self.server_url, self.working_mode, self.userid,  _ = self.init()
+        self.sessid, self.csrf_token, self.buvid, self.server_url, self.working_mode, self.userid,  self.loglevel, _ = self.init()
+        self.logger.remove()
+        self.logger.add(sys.stdout, level=self.loglevel)
         if self.server_url[-1] == '/':
             self.server_url = self.server_url[:-1]
         self.logger.info("Worker初始化")
         _msg = "配置文件载入正常" if _ else "配置文件载入失败，初始化配置文件"
         self.logger.info(_msg)
         self.logger.info(f"当前协调服务器地址: {self.server_url}")
+        self.logger.info(f"日志级别: {self.loglevel}")
         self.logger.info(f"工作模式: {self.working_mode}")
         self.logger.info(f"用户名: {self.userid}")
         self.logger.debug(f"SESSDATA: {self.sessid}")
         self.logger.debug(f"csrf_token: {self.csrf_token}")
         self.logger.debug(f"buvid: {self.buvid}")
-        self.close = True
+        self.close = False
         self.loop = None
 
     def init(self):
@@ -120,7 +93,16 @@ class Worker:
             userid = 'anonymous'
             conf.write(cfg_path, {'userid': 'anonymous'})
 
-        return sessid, csrf_token, buvid, server, mode, userid, normal_init_flag
+        try:
+            conf.read(cfg_path)
+            secrets = conf.items('secrets')
+            loglevel = secrets['loglevel']
+        except:
+            normal_init_flag = False
+            loglevel = 'INFO'
+            conf.write(cfg_path, {'loglevel': 'INFO'})
+
+        return sessid, csrf_token, buvid, server, mode, userid, loglevel, normal_init_flag
 
     def create_buvid(self):
         res = ''
@@ -183,20 +165,21 @@ class Worker:
         }
         for _ in range(2):
             try:
-                # api_url = 'https://www.baidu.com'
-                async with session.get(api_url, data=payload, headers=headers, cookies=cookies) as resp:
+                async with session.post(api_url, data=payload, headers=headers, cookies=cookies) as resp:
                     if resp.status == 200:
-                        res = json.loads(await resp.text())
-                        # res = await resp.text()
+                        res = await resp.text()
+                        self.logger.debug(f"步骤3反馈 - {res}")
+                        res = json.loads(res)
                         if check_success(res):
-                        # if True:
-                            self.logger.debug(f"步骤3成功 - {bvid}:{msg} - {res}")
-                            # self.logger.debug(f"步骤3成功 - {res[:10]}")
+                            self.logger.debug(f"步骤3成功 - {bvid}:{cid}:{progress}:{msg} - dmid:{res.get('data',{}).get('dmid','dmid')}")
                             return True
+                    self.logger.warning(f"步骤3状态码错误 - {resp.status}:{await resp.text()}")
                     await asyncio.sleep(10)
             except:
+                raise 
                 ...
         else:
+            self.logger.debug(f"步骤3失败")
             return False
 
 
@@ -241,7 +224,7 @@ class Worker:
     async def standard_process(self):
 
         try:
-            self.logger.debug("开始一个新的标准投递流程")
+            self.logger.info("开始一个新的标准投递流程")
             async with ClientSession() as session:
                 self.working_mode = 'auto'
                 res = await self.quest_apply(session)
@@ -249,6 +232,7 @@ class Worker:
                     raise TaskFail()
                 # else
                 qid, progress, cid, bvid, msg, token, bias = res
+                self.logger.info(f"目标 - {bvid}:{cid}:{progress}:{msg}")
                 if bias == 0:
                     raise TaskAllDone()
                 await asyncio.sleep(0.5)
@@ -257,38 +241,55 @@ class Worker:
                     raise TaskFail()
                 await asyncio.sleep(0.5)
                 # else
+                start_time = time.time()
                 res = await self.send_yitiaodanmu(session, progress, cid, bvid, msg)
                 if not res: 
                     raise TaskFail()
                 # else
                 self.logger.debug(f"步骤4 - 等待和检查")
                 await asyncio.sleep(20)
-                for _ in range(10):
+                for _, interval in enumerate((5,5,5,5,10,10,10,10,10)):
                     status = await determine_if_cmt_public(session, progress, cid, msg)
                     if status: 
                         self.logger.debug(f"步骤4检查成功")
                         break
                     self.logger.debug(f"步骤4第{_+1}次获取失败")
-                    await asyncio.sleep(5)
+                    await asyncio.sleep(interval)
                 else:
                     raise TaskFail()
                 res = await self.declare_succeeded(session, bvid, qid, token)
                 if not res:
                     raise TaskFail()
-                await asyncio.sleep(5)
+                sleep_time = max(0, MIN_INTERVAL - time.time() + start_time)
+                self.logger.info(f"投递成功 - {bvid}:{cid}:{progress}:{msg}")
+                if sleep_time > 0:
+                    self.logger.info(f"睡眠等待: {'%.2f' % sleep_time}s")
+                await asyncio.sleep(sleep_time)
+                return 1
         except TaskFail:
-            self.logger.info(f"投递失败，流程结束")
-            await asyncio.sleep(30)
+            self.logger.info(f"投递失败，流程结束，睡眠")
+            await asyncio.sleep(random.randint(10, 20))
+            return 2
         except TaskAllDone:
-            return True
+            return 3
+        return 2
 
     async def run_daemon(self):
 
+        fail_count = 0
         while True:
-            all_task_done = await self.standard_process()
-            if all_task_done:
-                self.logger.info(f"接收到全局结束信号，没有新的弹幕，线程退出")
-                self.close = True
+            res = await self.standard_process()
+            if res == 3:
+                self.logger.info(f"接收到全局结束信号，没有新的弹幕，长睡眠")
+                await asyncio.sleep(random.randint(3600, 7200))
+                # self.close = True; break
+            elif res == 2:
+                fail_count += 1
+            elif res == 1:
+                fail_count = 0
+            if fail_count >= 10:
+                self.logger.warning(f"连续失败10次投递，设置可能出现问题或SESSDATA过期，请检查相关设置，程序退出")
+            await asyncio.sleep(1)
 
     async def run_start(self):
         self.loop = asyncio.get_running_loop()
@@ -305,5 +306,4 @@ class Worker:
 
 logger.remove()
 sys.stdout.reconfigure(encoding='utf-8', errors='backslashreplace')
-logger.add(sys.stdout, level='DEBUG')
 asyncio.get_event_loop().run_until_complete(Worker(logger).run_start())

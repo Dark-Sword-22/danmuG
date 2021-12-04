@@ -36,6 +36,7 @@ async def main():
 
             cids = res['data'] | Map(lambda x: x['cid']) | list
             durations = res['data'] | Map(lambda x: [x['duration'], 0]) | list
+            durations[0][1] = None
             content[4] = f"CID: {json.dumps(cids)}"
             content[5] = f"时轴修正: {json.dumps(durations)}"
 
