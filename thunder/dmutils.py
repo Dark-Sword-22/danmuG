@@ -84,20 +84,6 @@ async def determine_if_cmt_public(session, target_progress, cid, target_cmt):
     except:
         return False
 
-def load_webhook_secret():
-    file_dir = os.path.dirname(os.path.realpath(__file__))
-    cfg_path = os.path.join(file_dir, "server_config.ini")
-
-    try:
-        conf = ConfigParser()
-        conf.read(cfg_path)
-        secrets = conf.items('secrets')
-        webhook_secret = secrets['test-secret']
-    except:
-        webhook_secret = 'test-secret'
-        Write(cfg_path, '[secrets]\n\n')
-        conf.write(cfg_path, {'webhook_secret': webhook_secret})
-    return webhook_secret
 
 async def git_pull(self):
     self.logger.debug("Git pull triggered")

@@ -9,7 +9,7 @@ from fastapi import FastAPI, Request, Header
 from fastapi.responses import ORJSONResponse
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from dmutils import AsyncIteratorWrapper, load_webhook_secret, git_pull, ConfigParser
+from dmutils import AsyncIteratorWrapper, git_pull, ConfigParser
 from dmdb import *
 
 file_dir = os.path.dirname(os.path.realpath(__file__))
@@ -17,6 +17,7 @@ cfg_path = os.path.join(file_dir, "server_config.ini")
 conf = ConfigParser()
 conf.read(cfg_path)
 secrets = conf.items('secrets')
+webhook_secret = secrets['webhook_secret']
 trust_list = json.loads(secrets['trust_list'].encode())
 dev = json.loads(secrets['dev'].encode())
 host = json.loads(secrets['host'].encode())
@@ -42,8 +43,6 @@ else: error_codes = dict(error_codes)
 
 default_logger = logging.getLogger("uvicorn")
 msg_core = {}
-
-webhook_secret = load_webhook_secret()
 
 @app.on_event("startup")
 async def startup():
