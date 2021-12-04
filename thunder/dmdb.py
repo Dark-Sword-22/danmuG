@@ -233,12 +233,25 @@ async def clean_task_daemon(engine, msg_core):
                 # msg_core.extend(new_core)
             await asyncio.sleep(random.randint(900, 1500))
 
+async def task_status_daemon(engine, table, qid):
+    await asyncio.sleep(300)
+    async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    async with async_session() as session:
+        item = (await select(table).where(table.id == qid)).scalars().first()
+        if item:
+            if item.status < 3:
+                item.fail_count += 1
+                if item.fail_count >= 2:
+                    item.status = 4
+            await session.commit()
+
 
 class DAL:
 
     _table_proj = {}
 
-    def __init__(self, db_session: Session, msg_core):
+    def __init__(self, db_engine, db_session: Session, msg_core):
+        self.engine = db_engine
         self.session = db_session
         self.table_porj = self.__class__._table_proj
         self.msg_core = msg_core
@@ -295,6 +308,7 @@ class DAL:
             if compare_digest(self.create_token(f"{item.send_time}-{item.rnd}"), token):
                 item.status = 1
                 await self.session.commit()
+                self.loop.create_task(task_status_daemon(self.engine, table, qid))
                 return True
             else:
                 return -3

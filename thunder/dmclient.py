@@ -9,7 +9,8 @@ from loguru import logger
 from dmutils import determine_if_cmt_public, ConfigParser
 from pipeit import *
 
-MIN_INTERVAL = 29
+VERSION = '1.0.1'
+MIN_INTERVAL = 28
 
 class TaskFail(Exception):
     ...
@@ -27,9 +28,11 @@ class Worker:
         self.logger.add(sys.stdout, level=self.loglevel)
         if self.server_url[-1] == '/':
             self.server_url = self.server_url[:-1]
+
         self.logger.info("Worker初始化")
         _msg = "配置文件载入正常" if _ else "配置文件载入失败，初始化配置文件"
         self.logger.info(_msg)
+        self.logger.info(f"弹幕投稿器版本: {VERSION}")
         self.logger.info(f"当前协调服务器地址: {self.server_url}")
         self.logger.info(f"日志级别: {self.loglevel}")
         self.logger.info(f"工作模式: {self.working_mode}")

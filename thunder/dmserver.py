@@ -67,7 +67,7 @@ async def get_archive_earliest(mode: Literal["auto", "specified"], bvid: Optiona
     async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
     async with async_session() as session:
         async with session.begin():
-            dal = DAL(session, msg_core)
+            dal = DAL(engine, session, msg_core)
             resp = await dal.get_archive_earliest(mode, str(bvid))
 
             if isinstance(resp, tuple):
@@ -83,7 +83,7 @@ async def client_confirm_quest(bvid: str, qid: int, token: str) -> dict:
     async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
     async with async_session() as session:
         async with session.begin():
-            dal = DAL(session, msg_core)
+            dal = DAL(engine, session, msg_core)
             resp = await dal.client_confirm_quest(bvid, qid, token)
 
             if resp == True:
@@ -101,7 +101,7 @@ async def client_declare_succeeded(bvid: str, qid: int, token: str, wdcr: str = 
     async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
     async with async_session() as session:
         async with session.begin():
-            dal = DAL(session, msg_core)
+            dal = DAL(engine, session, msg_core)
             resp = await dal.client_declare_succeeded(bvid, qid, token, wdcr)
 
             if resp == True:

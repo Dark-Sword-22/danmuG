@@ -385,6 +385,6 @@ async def main(logger):
 # loguru treatments
 sys.stdout.reconfigure(encoding='utf-8', errors='backslashreplace')
 logger.remove()
-logger.add("log_out.txt", level="DEBUG", rotation="5 MB")
+# logger.add("log_out.txt", level="DEBUG", rotation="5 MB")
 logger.add(sys.stdout, level='INFO')
 asyncio.get_event_loop().run_until_complete(main(logger))
