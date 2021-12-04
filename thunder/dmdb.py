@@ -8,7 +8,7 @@ import random
 import time
 import json
 from sqlalchemy import Column, Integer, String, DateTime, String, SmallInteger, text, Boolean
-from sqlalchemy import delete, select
+from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import declarative_base, sessionmaker, Session, selectinload
 from sqlalchemy.engine.url import URL
@@ -206,45 +206,49 @@ async def scan_and_init(engine):
 
 async def clean_task_daemon(engine, msg_core):
     while True:
-        for _ in range(24*3):
-            async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
-            async with async_session() as session:
-                ...
-                # new_core = {}
-                # for tab in table:
-                #     for line in tab:
-                #         if 0< line.status < 3:
-                #             stamp = msg_core.get(f'{tname}-{line.id}', None)
-                #             if stamp == None:
-                #                 line.status = 0
-                #                 line.fail_count += 1
-                #                 if line.fail_count >= 3:
-                #                     line.status = 4
-                #                 await session.commit()
-                #             elif time.time() - stamp >= 300:
-                #                 line.status = 0
-                #                 line.fail_count += 1
-                #                 if line.fail_count >= 3:
-                #                     line.status = 4
-                #                 await session.commit()
-                #             else:
-                #                 new_core[f'{tname}-{line.id}'] = stamp
-                # msg_core.clear()
-                # msg_core.extend(new_core)
-            await asyncio.sleep(random.randint(900, 1500))
+        async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+        async with async_session() as session:
+            stmt = select(BVRelations.tname).where(BVRelations.bvid==BVStatus.bvid).where(BVStatus.finished==False).order_by(BVStatus.create_time.desc()).limit(44)
+            table_names_to_check = set((await session.execute(stmt)).scalars().all())
+            table_to_check = AbstractTable.__subclasses__() | Filter(lambda x: x.__tablename__ in table_names_to_check) | list
+        for table in table_to_check:
+            async with asyncio.Lock():
+                async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+                async with async_session() as session:
+                    hit = (await session.execute(select(table).where(table.status < 3).limit(1))).scalars().all()
+                    if not hit:
+                        stmt = update(BVStatus).where(BVStatus.bvid == select(BVRelations.bvid).where(BVRelations.tname == table.__tablename__).limit(1)).values(finished = True)
+                        await session.execute(stmt, execution_options={"synchronize_session": 'fetch'})
+                        continue
+                    latest_update = (await session.execute(select(table.id).where(table.status >= 3).order_by(table.cmt_time.desc()).limit(1))).scalars().first()
+                    if latest_update:
+                        stmt = select(table).where(table.id == 1 and table.id < max(0, last_update_time-500))
+                        archives = (await session.execute(stmt)).scalars().all()
+                        if archives:
+                            for item in archives:
+                                item.fail_count += 1
+                                if item.fail_count >= 2:
+                                    item.status = 4
+                                else:
+                                    item.status = 0
+                    await session.commit()
+        await asyncio.sleep(random.randint(900, 1500))
 
 async def task_status_daemon(engine, table, qid):
-    await asyncio.sleep(300)
+    await asyncio.sleep(180)
     async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
     async with async_session() as session:
-        item = (await select(table).where(table.id == qid)).scalars().first()
+        item = (await session.execute(select(table).where(table.id == qid))).scalars().first()
         if item:
             if item.status < 3:
                 item.fail_count += 1
                 if item.fail_count >= 2:
                     item.status = 4
-            await session.commit()
-
+        # table finished?
+        unfinished_items = (await session.execute(select(table).where(table.status < 3).limit(1))).scalars().all()
+        if not unfinished_items:
+            stmt = update(BVStatus).where(BVStatus.bvid == select(BVRelations.bvid).where(BVRelations.tname == table.__tablename__)).values(finished = True)
+        await session.commit()
 
 class DAL:
 
@@ -282,11 +286,11 @@ class DAL:
             table = table_for_txt(rlitem.tname, 1)
             bvid = rlitem.bvid
             self.table_porj[bvid] = table
+
         stmt = select(table).where(table.status == 0).order_by(table.cmt_time).limit(44)
         item_set = (await self.session.execute(stmt)).scalars().all()
         if item_set:
             item = random.sample(item_set, 1)[0]
-            self.msg_core[f"{rlitem.tname}-{item.id}"] = time.time() # 标记任务开始时间
             return (
                 item.id, 
                 item.send_time, 
@@ -296,6 +300,23 @@ class DAL:
                 self.create_token(f"{item.send_time}-{item.rnd}"),
                 1 # 补位为0表示无任务
             ) 
+        else:
+            stmt = select(table).where(table.status == 1).order_by(table.cmt_time).limit(44)
+            item_set = (await self.session.execute(stmt)).scalars().all()
+            if len(item_set) > 10:
+                item = random.sample(item_set, 1)[0]
+                item.fail_count += 1
+                if item.fail_count >= 2:
+                    item.status = 4
+                else:
+                    item.status = 0
+            else:
+                # 确实没有任务了
+                for item in item_set:
+                    item.status = 4
+                    item.fail_count = 2
+                await session.execute(update(BVStatus).where(BVStatus.bvid == bvid).values(finished=True))
+            await session.commit()
         return True
 
     async def client_confirm_quest(self, bvid: str, qid: int, token: str):
@@ -334,6 +355,11 @@ class DAL:
                         res = False
                     if res:
                         item.status = 3
+                        # table finish?
+                        table_finish = await self.check_finished(table)
+                        if table_finish:
+                            stmt = update(BVStatus).where(BVStatus.bvid == bvid).values(finished=True)
+                            await self.session.execute(stmt)
                         stmt = select(Contributors).where(Contributors.uname == wdcr).limit(1)
                         person = (await self.session.execute(stmt)).scalars().first()
                         _ctime = datetime.datetime.now() + datetime.timedelta(seconds=3600)
@@ -344,13 +370,31 @@ class DAL:
                             await self.session.commit()
                         else:
                             self.session.add(Contributors(uname=wdcr, last_update_time=_ctime))
+                            await self.session.commit()
                         return True
                     else:
                         item.fail_count = item.fail_count + 1
                         item.status = 0
                         if item.fail_count >= 2:
                             item.status = 4
+                        if table_finish:
+                            stmt = update(BVStatus).where(BVStatus.bvid == bvid).values(finished=True)
+                            await self.session.execute(stmt)
                         await self.session.commit()
                         return -5
         else:
             return -1
+
+    async def check_finished(self, table):
+
+        stmt = select(table).where(table.status < 3).limit(1)
+        unfinished_items = (await self.session.execute(stmt)).scalars().all()
+        if not unfinished_items:
+            return True
+        else:
+            return False
+
+    async def fetch_superman(self):
+        res = await self.session.execute(select(Contributors).order_by(Contributors.total_chars.desc()).limit(10))
+        res = res.scalars().all()
+        return res | Map(lambda x: {"name": x.uname, "datetime": str(x.last_update_time)[:19], "wordcount": x.total_chars}) | list

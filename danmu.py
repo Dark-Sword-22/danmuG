@@ -16,7 +16,7 @@ from loguru import logger
 from pipeit import *
 
 
-VERSION = '0.3.2'
+VERSION = '0.3.3'
 SLEEP_INTERVAL = 5
 URL_FORMATTER = "https://cc.163.com/{0}/"
 
@@ -186,8 +186,16 @@ class Fisherman:
             '您的客户端较老，暂不支持显示表情',
         }
         self._re_block_set = (
-            re.compile(".*感谢.*大佬"),
-            re.compile("\[emts\][\s\S]*?\[/emts\]")
+            re.compile("感谢.*大佬"),
+            re.compile("\[emts\][\s\S]*?\[/emts\]"),
+            re.compile("\[img\][\s\S]*?\[/img\]"),
+            re.compile("<b>.+</b>"),
+            re.compile("(cc|CC)"),
+            re.compile("(cnm|CNM)"),
+            re.compile("(cao|CAO)"),
+            re.compile("(kale|KALE)"),
+            re.compile("艹"),
+            re.compile("狗比"),
         )
         self._string_filter = lambda x: x.replace('\r\n','\n').replace('\n',' ').strip()
 

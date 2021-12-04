@@ -110,6 +110,11 @@ async def client_declare_succeeded(bvid: str, qid: int, token: str, wdcr: str = 
                 return error_codes[resp]
             return {}
 
+@app.get('/api/fetch-superman', response_class=ORJSONResponse)
+async def fetch_superman() -> dict:
+    ...
+
+
 @app.post("/github-webhook", response_class=ORJSONResponse)
 async def github_webhook_activated(req: Request, X_Hub_Signature_256: Optional[str] = Header(None, convert_underscores=True)):
     payload = await req.body()

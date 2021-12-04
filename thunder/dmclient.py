@@ -1,11 +1,12 @@
 import os
 import asyncio
-from aiohttp import ClientSession
 import random
 import time
 import json
 import sys
+import re
 from loguru import logger
+from aiohttp import ClientSession
 from dmutils import determine_if_cmt_public, ConfigParser
 from pipeit import *
 
@@ -13,6 +14,9 @@ VERSION = '1.0.1'
 MIN_INTERVAL = 28
 
 class TaskFail(Exception):
+    ...
+
+class TaskFailnoSleep(Exception):
     ...
 
 class TaskAllDone(Exception):
@@ -42,6 +46,17 @@ class Worker:
         self.logger.debug(f"buvid: {self.buvid}")
         self.close = False
         self.loop = None
+        if self.working_mode == 'specified':
+            self.logger.info("请输入你希望投稿的视频链接，按回车继续")
+            self.logger.info("| 请注意，由于协调服务器仅缓存近期数据，距今22天以前上传的视频地址可能无法工作 |")
+            inp = input()
+            inp = re.search('/BV[a-zA-Z0-9]+', inp)
+            if inp:
+                self.query_bvid = inp.group()[1:]
+                assert 8 <= len(self.query_bvid) <= 16
+            else:
+                self.logger.warning("视频编号提取失败，请检查输入链接，程序结束。")
+
 
     def init(self):
         file_dir = os.path.dirname(os.path.realpath(__file__))
@@ -57,7 +72,7 @@ class Worker:
             normal_init_flag = False
             sessid, csrf_token = None, None
 
-        assert sessid and csrf_token 
+        assert len(sessid) == 34 and len(csrf_token) == 32 # 如果出现错误代表获取到的数据不合法 
 
         try:
             conf.read(cfg_path)
@@ -214,7 +229,7 @@ class Worker:
 
     async def declare_succeeded(self, session, bvid, qid, token):
         self.logger.debug("步骤5 - 回报")
-        async with session.get(f'{self.server_url}/api/quest-success', params={'bvid': bvid, 'qid': qid, 'token': token}) as resp:
+        async with session.get(f'{self.server_url}/api/quest-success', params={'bvid': bvid, 'qid': qid, 'token': token, 'wdcr': self.userid}) as resp:
             if resp.status == 200:
                 res = json.loads(await resp.text())
                 if res.get('success') == 1:
@@ -235,7 +250,7 @@ class Worker:
                     raise TaskFail()
                 # else
                 qid, progress, cid, bvid, msg, token, bias = res
-                self.logger.info(f"目标 - {bvid}:{cid}:{progress}:{msg}")
+                self.logger.info(f"【目标 - {bvid}:{cid}:{progress}:{msg}】")
                 if bias == 0:
                     raise TaskAllDone()
                 await asyncio.sleep(0.5)
@@ -251,7 +266,7 @@ class Worker:
                 # else
                 self.logger.debug(f"步骤4 - 等待和检查")
                 await asyncio.sleep(20)
-                for _, interval in enumerate((5,5,5,5,10,10,10,10,10)):
+                for _, interval in enumerate((10,5,5,10,10,10,10,10,10)):
                     status = await determine_if_cmt_public(session, progress, cid, msg)
                     if status: 
                         self.logger.debug(f"步骤4检查成功")
@@ -259,19 +274,22 @@ class Worker:
                     self.logger.debug(f"步骤4第{_+1}次获取失败")
                     await asyncio.sleep(interval)
                 else:
-                    raise TaskFail()
+                    raise TaskFailnoSleep()
                 res = await self.declare_succeeded(session, bvid, qid, token)
                 if not res:
                     raise TaskFail()
                 sleep_time = max(0, MIN_INTERVAL - time.time() + start_time)
-                self.logger.info(f"投递成功 - {bvid}:{cid}:{progress}:{msg}")
+                self.logger.info(f"投递成功")
                 if sleep_time > 0:
                     self.logger.info(f"睡眠等待: {'%.2f' % sleep_time}s")
                 await asyncio.sleep(sleep_time)
                 return 1
         except TaskFail:
-            self.logger.info(f"投递失败，流程结束，睡眠")
+            self.logger.warning(f"投递失败，睡眠")
             await asyncio.sleep(random.randint(10, 20))
+            return 2
+        except TaskFailnoSleep:
+            self.logger.warning(f"投递失败，睡眠")
             return 2
         except TaskAllDone:
             return 3
@@ -283,9 +301,11 @@ class Worker:
         while True:
             res = await self.standard_process()
             if res == 3:
+                if self.mode == 'specified':
+                    self.logger.info(f"接收到全局结束信号")
+                    self.close = True; break
                 self.logger.info(f"接收到全局结束信号，没有新的弹幕，长睡眠")
                 await asyncio.sleep(random.randint(3600, 7200))
-                # self.close = True; break
             elif res == 2:
                 fail_count += 1
             elif res == 1:
