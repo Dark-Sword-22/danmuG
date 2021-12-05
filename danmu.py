@@ -197,7 +197,7 @@ class Fisherman:
             re.compile("艹"),
             re.compile("狗比"),
         )
-        self._string_filter = lambda x: x.replace('\r\n','\n').replace('\n',' ').strip()
+        self._string_filter = lambda x: x.replace('\r\n',' ').replace('\n',' ').strip()
 
     def ddos_protect(self, cmt):
         '''

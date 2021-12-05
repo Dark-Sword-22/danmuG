@@ -9,3 +9,4 @@ gensim
 jieba
 pycryptodome
 google-api-python-client
+aiohttp
