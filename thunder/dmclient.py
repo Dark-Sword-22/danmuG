@@ -1,16 +1,19 @@
 import os
 import asyncio
+import signal
 import random
 import time
 import json
 import sys
 import re
+import requests
 from loguru import logger
 from aiohttp import ClientSession
+from hyper.contrib import HTTP20Adapter
 from dmutils import determine_if_cmt_public, ConfigParser
 from pipeit import *
 
-VERSION = '1.0.1'
+VERSION = '1.0.4'
 MIN_INTERVAL = 28
 
 class TaskFail(Exception):
@@ -26,25 +29,31 @@ class Worker:
 
     def __init__(self, logger):
         self.logger = logger
-        self.built_in_cdn_server = 'http://127.0.0.1:8080/'
-        self.sessid, self.csrf_token, self.buvid, self.server_url, self.working_mode, self.userid,  self.loglevel, _ = self.init()
-        self.logger.remove()
-        self.logger.add(sys.stdout, level=self.loglevel)
-        if self.server_url[-1] == '/':
+        self.built_in_cdn_server = 'https://dog.464933.xyz/'
+        self.sessid, self.csrf_token, self.buvid, self.server_url, self.working_mode, self.userid,  self.loglevel, self.worktime, self.proxy , _ = self.init()
+        self.sleeptime = 24 - self.worktime
+        while self.server_url[-1] == '/':
             self.server_url = self.server_url[:-1]
-
+        self.logger.add(sys.stdout, level=self.loglevel)
         self.logger.info("Worker初始化")
         _msg = "配置文件载入正常" if _ else "配置文件载入失败，初始化配置文件"
         self.logger.info(_msg)
         self.logger.info(f"弹幕投稿器版本: {VERSION}")
         self.logger.info(f"当前协调服务器地址: {self.server_url}")
+        self.logger.info(f"代理地址: {self.proxy}")
         self.logger.info(f"日志级别: {self.loglevel}")
         self.logger.info(f"工作模式: {self.working_mode}")
+        self.logger.info(f"工作/睡眠时长: {self.worktime}/{self.sleeptime}h")
         self.logger.info(f"用户名: {self.userid}")
         self.logger.debug(f"SESSDATA: {self.sessid}")
         self.logger.debug(f"csrf_token: {self.csrf_token}")
         self.logger.debug(f"buvid: {self.buvid}")
+        self._last_sigint_time = time.time()
+        self.workflag = True
+        self.global_sleep_daemon = None
         self.close = False
+        self.fail_count = 0
+        self.wait_closed = asyncio.Event()
         self.loop = None
         if self.working_mode == 'specified':
             self.logger.info("请输入你希望投稿的视频链接，按回车继续")
@@ -70,10 +79,11 @@ class Worker:
             sessid, csrf_token = secrets['sessid'], secrets['csrf_token']
         except:
             normal_init_flag = False
-            sessid, csrf_token = None, None
+            sessid, csrf_token = '', ''
 
-        assert len(sessid) == 34 and len(csrf_token) == 32 # 如果出现错误代表获取到的数据不合法 
-
+        if len(sessid) != 34 or len(csrf_token) != 32: # 如果出现错误代表获取到的数据不合法 
+            input("身份信息校验失败，按任意键退出")
+            sys.exit(1)
         try:
             conf.read(cfg_path)
             secrets = conf.items('secrets')
@@ -120,7 +130,38 @@ class Worker:
             loglevel = 'INFO'
             conf.write(cfg_path, {'loglevel': 'INFO'})
 
-        return sessid, csrf_token, buvid, server, mode, userid, loglevel, normal_init_flag
+        try:
+            conf.read(cfg_path)
+            secrets = conf.items('secrets')
+            worktime = secrets['worktime']
+            assert worktime.isdigit()
+            worktime = min(max(int(worktime),1),24)
+        except:
+            normal_init_flag = False
+            worktime = '12'
+            conf.write(cfg_path, {'worktime': '12'})
+
+        try:
+            conf.read(cfg_path)
+            secrets = conf.items('secrets')
+            proxy = secrets['proxy']
+            assert (proxy == 'false') or ('http' in proxy)
+            if proxy == 'false':
+                proxy = False
+            else:
+                proxy_a, proxy_b = proxy.split('://')
+                while proxy_b[-1] == '/':
+                    proxy_b = proxy_b[:-1]
+                proxy = {
+                    proxy_a: proxy_b
+                }
+        except:
+            self.logger.warning("代理载入错误，不符合http://example.com:port的格式")
+            normal_init_flag = False
+            proxy = False
+            conf.write(cfg_path, {'proxy': 'false'})
+
+        return sessid, csrf_token, buvid, server, mode, userid, loglevel, worktime, proxy, normal_init_flag
 
     def create_buvid(self):
         res = ''
@@ -140,7 +181,7 @@ class Worker:
             return False
 
         self.logger.debug("步骤3 - 发送一条弹幕")
-        api_url = 'http://api.bilibili.com/x/v2/dm/post'
+        api_url = 'https://api.bilibili.com/x/v2/dm/post'
         headers = {
             ':authority': 'api.bilibili.com',
             ':method': 'POST',
@@ -170,7 +211,7 @@ class Worker:
         payload = {
             'type': '1',
             'oid': cid,
-            'msg': msg,
+            'msg': msg[:80],
             'bvid': bvid,
             'progress': progress,
             'color': '16777215',
@@ -183,16 +224,35 @@ class Worker:
         }
         for _ in range(2):
             try:
-                async with session.post(api_url, data=payload, headers=headers, cookies=cookies) as resp:
-                    if resp.status == 200:
-                        res = await resp.text()
-                        self.logger.debug(f"步骤3反馈 - {res}")
-                        res = json.loads(res)
-                        if check_success(res):
-                            self.logger.debug(f"步骤3成功 - {bvid}:{cid}:{progress}:{msg} - dmid:{res.get('data',{}).get('dmid','dmid')}")
-                            return True
-                    self.logger.warning(f"步骤3状态码错误 - {resp.status}:{await resp.text()}")
-                    await asyncio.sleep(10)
+                # 因为发现asyncio的post模块似乎用pyinstaller打包会遇到bug，G了
+                # async with session.post(api_url, data=payload, headers=headers, cookies=cookies) as resp:
+                #     if resp.status == 200:
+                #         res = await resp.text()
+                #         self.logger.debug(f"步骤3反馈 - {res}")
+                #         res = json.loads(res)
+                #         if check_success(res):
+                #             self.logger.debug(f"步骤3成功 - {bvid}:{cid}:{progress}:{msg} - dmid:{res.get('data',{}).get('dmid','dmid')}")
+                #             return True
+                #     self.logger.warning(f"步骤3状态码错误 - {resp.status}:{await resp.text()}")
+                # await asyncio.sleep(10)
+                rsession = requests.session()
+                if self.proxy:
+                    rsession.proxies = self.proxy
+                rsession.mount('https://api.bilibili.com', HTTP20Adapter())
+                resp = rsession.post(api_url, data=payload, headers=headers, cookies=cookies, proxies = None if self.proxy == False else self.proxy)
+                if resp.status_code == 200:
+                    res = resp.text
+                    self.logger.debug(f"步骤3反馈 - {res}")
+                    res = json.loads(res)
+                    if check_success(res):
+                        self.logger.debug(f"步骤3成功 - {bvid}:{cid}:{progress}:{msg} - dmid:{res.get('data',{}).get('dmid','dmid')}")
+                        return True
+                self.logger.warning(f"步骤3状态码错误 - {resp.status_code}:{resp.text}")
+                if self.fail_count >= 3 and resp.status_code != 200:
+                    self.global_sleep_daemon.cancel()
+                    self.global_sleep_daemon = self.loop.create_task(self.work_work_sleep_sleep(avoid_first_work = True))
+                    self.logger.warning(f"多次被拦截触发强制睡眠")
+                await asyncio.sleep(10)
             except:
                 raise 
                 ...
@@ -241,6 +301,8 @@ class Worker:
 
     async def standard_process(self):
 
+        if self.workflag == False:
+            return 1
         try:
             self.logger.info("开始一个新的标准投递流程")
             async with ClientSession() as session:
@@ -297,8 +359,13 @@ class Worker:
 
     async def run_daemon(self):
 
-        fail_count = 0
+        self.fail_count = 0
         while True:
+            if self.close:
+                self.logger.info("投递线程终止")
+                self.wait_closed.set()
+                break
+
             res = await self.standard_process()
             if res == 3:
                 if self.mode == 'specified':
@@ -307,26 +374,54 @@ class Worker:
                 self.logger.info(f"接收到全局结束信号，没有新的弹幕，长睡眠")
                 await asyncio.sleep(random.randint(3600, 7200))
             elif res == 2:
-                fail_count += 1
+                self.fail_count += 1
             elif res == 1:
-                fail_count = 0
-            if fail_count >= 10:
+                self.fail_count = 0
+            if self.fail_count >= 10:
                 self.logger.warning(f"连续失败10次投递，设置可能出现问题或SESSDATA过期，请检查相关设置，程序退出")
+                self.close = True
             await asyncio.sleep(1)
+
+    def pseudo_sigint(self, sig, frame):
+        _cur_sigint_time = time.time()
+        if (_cur_sigint_time - self._last_sigint_time) < 0.18:
+            self.logger.warning("强制终止信号")
+            sys.exit(1)
+        self._last_sigint_time = _cur_sigint_time
+        if not self.close:
+            self.logger.info("接收到键盘终止信号，准备退出程序")
+            self.logger.info("如果有正在进行的投递流程则会等到本轮投递流程完成")
+            self.close = True
+
+    async def work_work_sleep_sleep(self, avoid_first_work = False):
+        while True:
+            for _ in range(1):
+                if avoid_first_work:
+                    avoid_first_work = True
+                    break
+                self.workflag = True
+                for _ in range(self.worktime):
+                    await asyncio.sleep(3600)
+            self.workflag = False 
+            for _ in range(self.sleeptime):
+                await asyncio.sleep(3600)
+
 
     async def run_start(self):
         self.loop = asyncio.get_running_loop()
 
+        self.global_sleep_daemon = self.loop.create_task(self.work_work_sleep_sleep())
         self.loop.create_task(self.run_daemon())
-        while True:
-            try:
-                if self.close:
-                    self.logger.info("程序结束")
-                    break
-                await asyncio.sleep(3)
-            except KeyboardInterrupt:
-                return
+        while not self.wait_closed.is_set():
+            await asyncio.sleep(3)
+        self.logger.info("程序结束")
+        sys.exit(0)
+
 
 logger.remove()
 sys.stdout.reconfigure(encoding='utf-8', errors='backslashreplace')
-asyncio.get_event_loop().run_until_complete(Worker(logger).run_start())
+logger.add('log_debug.txt', level='DEBUG', rotation="5 MB", encoding='utf-8')
+worker = Worker(logger)
+signal.signal(signal.SIGINT, worker.pseudo_sigint)
+asyncio.get_event_loop().run_until_complete(worker.run_start())
+input("按回车键或点击右上角叉叉退出")

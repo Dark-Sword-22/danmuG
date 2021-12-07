@@ -4,120 +4,161 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
-    <style type="text/css"> 
+    <style type="text/css">
+    .pagination-link{
+      background: #fafafa
+    } 
     </style> 
+  <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
   <link rel="stylesheet" href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@5.8.55/css/materialdesignicons.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/buefy/dist/buefy.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
   </head>
   <body style="margin:0;padding:0">
-    <div class="absolute w-screen h-screen" style="pointer-events: none;">
-      <div id="plus22s" class="bg-green-500 w-10 text-gray-100 text-xs px-1.5 rounded absolute animate__animated" style="opacity:0.9;display:none;top:-30px;left:-30px">+22</div>
-    </div>
-    <div class="flex flex-col w-full">
-      <div class="flex-initial pl-4 pb-4 pt-4">
-        <a href='https://github.com/Dark-Sword-22/danmuG'><h1 class="font-extrabold text-2xl">秦国弹幕姬</h1></a>
-        <h4 class="font-medium text-md">受伤倒地是否做错了什么</h4>
+    <div id="app" class="min-h-screen" style="background-color: #e0e5ec">
+      <div class="absolute w-screen h-screen" style="pointer-events: none;">
+        <div ref="plus1s" class="w-10 text-gray-900 text-xs px-1.5 rounded absolute animate__animated" style="opacity:1;display:block;top:-30px;left:-30px">+22</div>
       </div>
-      <div class="flex-grow pl-4">
-        <table id="tab">
-          <tbody>
-            <tr>
-              <th></th>
-              <th><a href="#">Name</a></th>
-              <th>Last modified</th>
-              <th>Size</th>
-              <th>Length</th>
-            </tr>
-            <tr><th colspan="5"><hr></th></tr>
-            <tr>
-              <td valign="top"></td>
-              <td><a href="https://github.com/Dark-Sword-22/danmuG/tree/main/data" class="mr-8 text-blue-600 underline">点击跳转原始弹幕文件</a></td><td>&nbsp;</td>
-              <td align="right">  - </td>
-            </tr>
-            
-            <tr>
-              <td valign="top"></td>
-              <td><a href="https://dark-sword-22.github.io/danmuG/danmu-2021-12-04-19-38-19-333-【Quin】‍哑巴直播间.html" class="mr-8 text-blue-600 underline">danmu-2021-12-04-19-38-19-333-【Quin】‍哑巴直播间.html</a>
-              </td><td align="right"><span class="mr-8">2021-12-04 19:38:19.333000</span></td>
-              <td align="right"><span class="mr-8">809.54KB</span></td>
-              <td align="right">14884</td>
-            </tr>
-            <tr>
-              <td valign="top"></td>
-              <td><a href="https://dark-sword-22.github.io/danmuG/danmu-2021-11-29-19-14-22-607-【Quin】‍致远星战况如何？.html" class="mr-8 text-blue-600 underline">danmu-2021-11-29-19-14-22-607-【Quin】‍致远星战况如何？.html</a>
-              </td><td align="right"><span class="mr-8">2021-11-29 19:14:22.607000</span></td>
-              <td align="right"><span class="mr-8">1.08MB</span></td>
-              <td align="right">21942</td>
-            </tr>
-            <tr>
-              <td valign="top"></td>
-              <td><a href="https://dark-sword-22.github.io/danmuG/danmu-2021-11-28-20-48-21-249-【Quin】‍小卡比兽必秒隆隆岩.html" class="mr-8 text-blue-600 underline">danmu-2021-11-28-20-48-21-249-【Quin】‍小卡比兽必秒隆隆岩.html</a>
-              </td><td align="right"><span class="mr-8">2021-11-28 20:48:21.249000</span></td>
-              <td align="right"><span class="mr-8">556.48KB</span></td>
-              <td align="right">10464</td>
-            </tr>
-            <tr>
-              <td valign="top"></td>
-              <td><a href="https://dark-sword-22.github.io/danmuG/danmu-2021-11-25-20-27-52-628-【Quin】‍致远星秒杀光环无限.html" class="mr-8 text-blue-600 underline">danmu-2021-11-25-20-27-52-628-【Quin】‍致远星秒杀光环无限.html</a>
-              </td><td align="right"><span class="mr-8">2021-11-25 20:27:52.628000</span></td>
-              <td align="right"><span class="mr-8">682.27KB</span></td>
-              <td align="right">13564</td>
-            </tr>
-            <!-- <tr>
-              <td valign="top"></td>
-              <td><a href="" class="mr-8 text-blue-600 underline">chromedriver_linux64.zip</a>
-              </td><td align="right"><span class="mr-8">2021-11-19 10:02:35</span></td>
-              <td align="right"><span class="mr-8">9.66MB</span></td>
-              <td align="right">1000</td>
-            </tr> -->
-            <tr><th colspan="5"><hr></th></tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="flex-none ml-4 flex flex-row-reverse mt-2 select-none" id="tail" style="width:300px;opacity:0">
-        <div class="pt-0.5">
-          <!-- <a href="/danmuG/"> -->
-          <a href="#" id="plus1s">
-            <img src="https://visitor-badge.glitch.me/badge?page_id=darksword22.danmuG&left_color=red&right_color=green&left_text=Dark%20Sword">
-          </a>
+      <div class="flex flex-col w-full">
+        <div class="flex-initial pl-4 pb-4 pt-4 w-full flex flex-col items-center mt-4">
+          <a href='https://github.com/Dark-Sword-22/danmuG'><h1 class="font-extrabold text-3xl text-gray-700 tracking-wide">秦国弹幕姬</h1></a>
+          <h4 class="font-medium text-lg mt-2">受伤倒地是否做错了什么</h4>
         </div>
-        <div>
-          <a href="https://github.com/Dark-Sword-22/danmuG#目前的困难"><span class="text-gray-300 font-light text-sm mr-1">本项目需要你的帮助，点我了解？</span></a>
+        <div class="flex-none pl-4 w-full items-center flex flex-col hidden mt-2" ref="table_div">
+          <b-table 
+            class="mx-10"
+            :data="table_data" 
+            striped
+            hoverable
+            paginated
+            per-page='10'
+          >
+            <b-table-column field="full_name" label="Name" :td-attrs="columnTdAttrs" v-slot="props">
+              <a :href="props.row.href">
+                <span class="text-gray-500 lg:mr-8 md:mr-3 underline"> {{ props.row.display_name }} </span>
+              </a>
+            </b-table-column>
+            <b-table-column field="datetime" label="Last modified" :td-attrs="columnTdAttrs" centered v-slot="props">
+              <span class="tag is-info  lg:ml-4 md:ml-1.5 lg:ml-4 md:ml-1.5"> {{ props.row.datetime }} </span>
+            </b-table-column>
+            <b-table-column field="size" label="Size" :td-attrs="columnTdAttrs" v-slot="props">
+              <span class="font-semibold text-gray-600 tracking-wider lg:mr-8 md:mr-3"> {{props.row.size}} </span>
+            </b-table-column>
+            <b-table-column field="length" label="Length" :td-attrs="columnTdAttrs" v-slot="props">
+              <span class="text-gray-500 tracking-wide  lg:mr-8 md:mr-3"> {{ props.row.length }} </span>
+            </b-table-column>
+            <b-table-column field="health" label="Health" :td-attrs="columnTdAttrs" v-slot="props">
+              <a :href="props.row.href">
+                <span title="当前稿件的弹幕重投完成度">
+                  <b-progress 
+                    :value="props.row.health"
+                    :type="props.row.health >= 75 ? 'is-success': props.row.health >= 35 ? 'is-warning': props.row.health >= 0 ? 'is-danger': 'is-text'"
+                    show-value 
+                    format="percent" 
+                    style="width:100px"
+                  ></b-progress>
+                </span>
+              </a>
+            </b-table-column>
+            <template #empty>
+              <div class="has-text-centered">No records</div>
+            </template>
+          </b-table>
+        </div>
+        <div class="flex-initial pl-4 pb-4 pt-4 w-full flex flex-col items-center mt-12">
+          <a href='https://github.com/Dark-Sword-22/danmuG'><h1 class="font-extrabold text-2xl text-gray-600 tracking-wide">超人排行榜</h1></a>
+          <h4 class="font-medium text-lg mt-2 text-gray-600">我的超人！</h4>
+        </div>
+        <div class="flex-grow pl-4 flex flex-col items-center hidden" ref="superman_div">
+          <b-table 
+            class="mx-10"
+            :data="superman_data" 
+            striped
+            hoverable
+            per-page='10'
+          >
+            <b-table-column field="name" label="姓名" v-slot="props">
+              <span class="text-gray-600 lg:mr-8 md:mr-3"> {{ props.row.name }} </span>
+            </b-table-column>
+            <b-table-column field="wordcount" label="上传总字数" v-slot="props">
+              <span class="font-semibold text-gray-600 tracking-wider lg:mr-8 md:mr-3"> {{props.row.wordcount}} </span>
+            </b-table-column>
+            <b-table-column field="datetime" label="最后活跃时间" centered v-slot="props">
+              <span class="tag is-text  lg:ml-4 md:ml-1.5 lg:ml-4 md:ml-1.5"> {{ props.row.datetime }} </span>
+            </b-table-column>
+            <template #empty>
+              <div class="has-text-centered">No records</div>
+            </template>
+          </b-table>
+        </div>
+        <div class="flex flex-col items-center mb-20">
+          <div class="flex-none ml-4 flex flex-row-reverse mt-4 select-none" id="tail" style="width:380px;opacity:1">
+            <div class="pt-0.5">
+              <a href="#plus22s" id="plus22s" @click="refresh_img" ref="plus22s" class="outline-none">
+                <img :src="tag_src">
+              </a>
+            </div>
+            <div>
+              <a href="https://github.com/Dark-Sword-22/danmuG#我们做了什么"><span class="text-gray-500 font-light text-sm mr-1">本项目需要你的帮助，点我了解？</span></a>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-    <script>
-      let tab_div = document.getElementById("tab")
-      let tail_div =  document.getElementById("tail")
-      tail_div.style.width=tab_div.offsetWidth+"px";
-      tail_div.style.opacity=1
-
-      let pos_x = 0
-      let pos_y = 0
-      document.onmousemove = (e) => {
-        pos_x = e.pageX;
-        pos_y = e.pageY;
-      }
-
-      window.onload = () => {
-        let flag1 = true
-        let ele1 = document.getElementById('plus1s')
-        let ele22 = document.getElementById('plus22s')
-        ele1.onclick = () => {
-          if (flag1) {
-            flag1 = false
-            ele22.style.top = pos_y-15 + 'px'
-            ele22.style.left = pos_x-18 + 'px'
-            if (pos_x === 0 || pos_y === 0) {
-              ele22.style.top = ele1.offsetTop-10 + 'px';
-              ele22.style.left = ele1.offsetLeft+30 + 'px';
+  </body>
+  <script src="https://unpkg.com/buefy/dist/buefy.min.js"></script>
+  <script>
+    const superman = JSON.parse('[{"name": "\\u72c2\\u66b4\\u5339\\u683c", "datetime": "2021-12-06 20:15:33", "wordcount": 42746}, {"name": "\\u7f3a\\u795e", "datetime": "2021-12-04 12:59:46", "wordcount": 570}, {"name": "\\u795e\\u79d8\\u597d\\u54e5\\u54e5", "datetime": "2021-12-04 12:58:47", "wordcount": 569}]')
+    const data = JSON.parse('[{"full_name": "danmu-2021-12-06-20-11-58-688-\\u3010Quin\\u3011\\u200d\\u54c1\\u5473\\u5149\\u73af3", "display_name": "\\u3010Quin\\u3011\\u200d\\u54c1\\u5473\\u5149\\u73af3", "size": "837.26KB", "length": 15470, "href": "https://dark-sword-22.github.io/danmuG/danmu-2021-12-06-20-11-58-688-\\u3010Quin\\u3011\\u200d\\u54c1\\u5473\\u5149\\u73af3.html", "datetime": "2021-12-06 20:11:58", "health": "NaN"}, {"full_name": "danmu-2021-12-04-19-38-19-333-\\u3010Quin\\u3011\\u200d\\u54d1\\u5df4\\u76f4\\u64ad\\u95f4", "display_name": "\\u3010Quin\\u3011\\u200d\\u54d1\\u5df4\\u76f4\\u64ad\\u95f4", "size": "744.34KB", "length": 13975, "href": "https://dark-sword-22.github.io/danmuG/danmu-2021-12-04-19-38-19-333-\\u3010Quin\\u3011\\u200d\\u54d1\\u5df4\\u76f4\\u64ad\\u95f4.html", "datetime": "2021-12-04 19:38:19", "health": "NaN"}, {"full_name": "danmu-2021-11-29-19-14-22-607-\\u3010Quin\\u3011\\u200d\\u81f4\\u8fdc\\u661f\\u6218\\u51b5\\u5982\\u4f55\\uff1f", "display_name": "\\u3010Quin\\u3011\\u200d\\u81f4\\u8fdc\\u661f\\u6218\\u51b5\\u5982\\u4f55\\uff1f", "size": "1.04MB", "length": 21224, "href": "https://dark-sword-22.github.io/danmuG/danmu-2021-11-29-19-14-22-607-\\u3010Quin\\u3011\\u200d\\u81f4\\u8fdc\\u661f\\u6218\\u51b5\\u5982\\u4f55\\uff1f.html", "datetime": "2021-11-29 19:14:22", "health": 93.1}, {"full_name": "danmu-2021-11-28-20-48-21-249-\\u3010Quin\\u3011\\u200d\\u5c0f\\u5361\\u6bd4\\u517d\\u5fc5\\u79d2\\u9686\\u9686\\u5ca9", "display_name": "\\u3010Quin\\u3011\\u200d\\u5c0f\\u5361\\u6bd4\\u517d\\u5fc5\\u79d2\\u9686\\u9686\\u5ca9", "size": "544.74KB", "length": 10285, "href": "https://dark-sword-22.github.io/danmuG/danmu-2021-11-28-20-48-21-249-\\u3010Quin\\u3011\\u200d\\u5c0f\\u5361\\u6bd4\\u517d\\u5fc5\\u79d2\\u9686\\u9686\\u5ca9.html", "datetime": "2021-11-28 20:48:21", "health": 39.3}, {"full_name": "danmu-2021-11-25-20-27-52-628-\\u3010Quin\\u3011\\u200d\\u81f4\\u8fdc\\u661f\\u79d2\\u6740\\u5149\\u73af\\u65e0\\u9650", "display_name": "\\u3010Quin\\u3011\\u200d\\u81f4\\u8fdc\\u661f\\u79d2\\u6740\\u5149\\u73af\\u65e0\\u9650", "size": "667.14KB", "length": 13313, "href": "https://dark-sword-22.github.io/danmuG/danmu-2021-11-25-20-27-52-628-\\u3010Quin\\u3011\\u200d\\u81f4\\u8fdc\\u661f\\u79d2\\u6740\\u5149\\u73af\\u65e0\\u9650.html", "datetime": "2021-11-25 20:27:52", "health": 24.3}]')
+  </script>
+  <script>
+    var app = new Vue({
+      el: '#app',
+      data: {
+        message: 'Hello Vue!',
+        table_data: data,
+        show_table: false,
+        superman_data: superman,
+        tag_src: "https://visitor-badge.glitch.me/badge?page_id=darksword22.danmuG&left_color=red&right_color=green&left_text=Dark%20Sword",
+        pos_x: 0,
+        pos_y: 0,
+        flag: true,
+      },
+      mounted() {
+        this.$refs.table_div.className = "flex-none pl-4 w-full items-center flex flex-col  mt-2"
+        this.$refs.superman_div.className = "flex-grow pl-4 flex flex-col items-center"
+        document.onmousemove = (e) => {
+          this.pos_x = e.pageX;
+          this.pos_y = e.pageY;
+        }
+      },
+      methods: {
+        refresh_img(){
+          if (this.flag) {
+            this.flag = false
+            let _buf = this.tag_src
+            let ele1 = this.$refs.plus1s
+            let ele22 = this.$refs.plus22s
+            if (this.pos_x === 0 || this.pos_y === 0) {
+              ele1.style.top = ele22.offsetTop-10 + 'px';
+              ele1.style.left = ele22.offsetLeft+30 + 'px';
+            } else {
+              ele1.style.top = this.pos_y -15 + 'px'
+              ele1.style.left = this.pos_x+ 'px'
             }
-            ele22.style.display = 'block'
-            ele22.classList.add("animate__fadeOutUp")
-            setTimeout(()=>{flag1 = true;location.reload()}, 300);
+            ele1.style.display = 'block'
+            ele1.classList.add("animate__fadeOutUp")
+            this.tag_src = ''
+            setTimeout(() => {this.tag_src = _buf}, 50)
+            setTimeout(() => {this.flag = true;ele1.style.display = 'none';ele1.classList.remove("animate__fadeOutUp");window.location.href="https://github.com/Dark-Sword-22/danmuG#我们做了什么"}, 300)
           }
+        },
+        columnTdAttrs(row, column) {
+          return null
         }
       }
-    </script>
-  </body>
+    })
+  </script>
 </html>

@@ -25,6 +25,10 @@ flt_pats = (
     '\n[0-9-: \.]+ - [0-9-: \.]+ - 急了 他急了 主播他急了',
 ) | Map(lambda x: re.compile(x)) | tuple
 
+key_word_pats = (
+    re.compile('(cc|CC|cnm|CNM|cao|CAO|kale|KALE|艹|狗比|拉屎|本子|主播)'),
+)
+
 for file_name in files:
     file_path = os.path.join(src_dir, file_name)
     text = Read(file_path)
@@ -33,4 +37,16 @@ for file_name in files:
         while scaned:
             text = text[:scaned.start()] + text[scaned.end():]
             scaned = pat.search(text)
-    Write(file_path, text)
+    # 
+    text = text.split('\n')
+    text_new = text[:8] | Map(lambda x:x + '\n') | list
+    for line in text[8:]:
+        for pat in key_word_pats:
+            if pat.search(line):
+                break
+        else:
+            text_new.append(line + '\n')
+    while text_new[-1] == '\n': 
+        text_new.pop()
+    text_new = ''.join(text_new)
+    Write(file_path, text_new)

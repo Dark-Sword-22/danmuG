@@ -8,7 +8,7 @@ import random
 import time
 import json
 from sqlalchemy import Column, Integer, String, DateTime, String, SmallInteger, text, Boolean
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, select, update, inspect, func
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import declarative_base, sessionmaker, Session, selectinload
 from sqlalchemy.engine.url import URL
@@ -88,7 +88,10 @@ class Contributors(Base):
 async def scan_and_reload(engine):
 
     def _get(x):
-        return x[x.index(':')+1:].strip()
+        if ":" in x:
+            return x[x.index(':')+1:].strip()
+        else:
+            return ""
 
     def valid_check(cids, prefixs, bvid):
         try:
@@ -232,14 +235,14 @@ async def scan_and_reload(engine):
 
 async def clean_task_daemon(engine, msg_core):
     while True:
-        async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+        async_session = sessionmaker(engine, expire_on_commit=True, class_=AsyncSession)
         async with async_session() as session:
             stmt = select(BVRelations.tname).where(BVRelations.bvid==BVStatus.bvid).where(BVStatus.finished==False).order_by(BVStatus.create_time.desc()).limit(44)
             table_names_to_check = set((await session.execute(stmt)).scalars().all())
             table_to_check = AbstractTable.__subclasses__() | Filter(lambda x: x.__tablename__ in table_names_to_check) | list
         for table in table_to_check:
             async with GlobLock:
-                async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+                async_session = sessionmaker(engine, expire_on_commit=True, class_=AsyncSession)
                 async with async_session() as session:
                     hit = (await session.execute(select(table).where(table.status < 3).limit(1))).scalars().all()
                     if not hit:
@@ -348,9 +351,9 @@ class DAL:
                 for item in item_set:
                     item.status = 4
                     item.fail_count = 2
-                await session.execute(update(BVStatus).where(BVStatus.bvid == bvid).values(finished=True))
-            await session.commit()
-        return True
+                await self.session.execute(update(BVStatus).where(BVStatus.bvid == bvid).values(finished=True))
+            await self.session.commit()
+            return True
 
     async def client_confirm_quest(self, bvid: str, qid: int, token: str):
         table = self.table_porj.get(bvid)
@@ -410,6 +413,7 @@ class DAL:
                         item.status = 0
                         if item.fail_count >= 2:
                             item.status = 4
+                        table_finish = await self.check_finished(table)
                         if table_finish:
                             stmt = update(BVStatus).where(BVStatus.bvid == bvid).values(finished=True)
                             await self.session.execute(stmt)
@@ -428,6 +432,28 @@ class DAL:
             return False
 
     async def fetch_superman(self):
-        res = await self.session.execute(select(Contributors).order_by(Contributors.total_chars.desc()).limit(10))
+        res = await self.session.execute(select(Contributors).order_by(Contributors.total_count.desc()).limit(10))
         res = res.scalars().all()
         return res | Map(lambda x: {"name": x.uname, "datetime": str(x.last_update_time)[:19], "wordcount": x.total_chars}) | list
+
+    async def fetch_accomplishment_rate(self):
+
+        def use_inspector(conn):
+            inspector = inspect(conn)
+            return inspector.get_table_names()
+
+        async with self.engine.connect() as conn:
+            tables = await conn.run_sync(use_inspector)
+        
+        tables = tables | Filter(lambda x: x[:6] == 'danmu-' and x[6:10].isdigit()) | list 
+        tables.sort(key = lambda x: datetime.datetime.strptime(x[6:6+21], '%Y-%m-%d-%H-%M-%S-%f'), reverse = True)
+        tables = tables[:20]
+
+        res = {}
+        for table_name in tables:
+            model = Base.get_model_by_table_name(table_name)
+            stmt = select(func.count()).select_from(select(model).where(model.status>=3))
+            r = (await self.session.execute(stmt)).scalars().first()
+            if r:
+                res[table_name] = r
+        return res

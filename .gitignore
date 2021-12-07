@@ -134,3 +134,10 @@ log*
 chrome*
 *.db
 *config*ini
+thunder/build/
+thunder/dist/
+thunder/log*
+*.spec
+slog*
+misc/pyinstaller_patch/pyinstaller_patch/
+dmclient/

@@ -5,6 +5,7 @@ import datetime
 from typing import List, Optional
 from bs4 import BeautifulSoup
 from cmt_nlp import train_nlp_model, string_query
+import requests
 from pipeit import *
 import json
 import os
@@ -69,18 +70,12 @@ def jinja222(extra_head, main_chart_div, ptao, extra_scripts, tag_res):
     )
     return template
 
-def jinja22(fl):
-    template = Read(os.path.abspath('./templates/html22.html'))
-    tr_tmplate ='''
-            <tr>
-              <td valign="top"></td>
-              <td><a href="{url}" class="mr-8 text-blue-600 underline">{hname}</a>
-              </td><td align="right"><span class="mr-8">{realt}</span></td>
-              <td align="right"><span class="mr-8">{size}</span></td>
-              <td align="right">{length}</td>
-            </tr>'''
-    filelist_tr = ''.join([tr_tmplate.format(url=url, hname=hname, realt=realt, size=size, length=length) for url, hname, realt, size, length in fl])
-    template = template.replace('{{filelist_tr}}', filelist_tr)
+def jinja22(struct, superman_data):
+    template = (
+        Read(os.path.abspath('./templates/html22.html'))
+        .replace("{{main_data}}", repr(json.dumps(struct)))
+        .replace("{{superman_data}}", repr(json.dumps(superman_data)))
+    )
     return template
 
 
@@ -271,9 +266,10 @@ def main(mode):
         dst_files.sort()
         break
 
-    fl = []
+    struct = []
     for file_name in dst_files:
         source_path = os.path.join(src_dir, file_name+'.txt')
+        stream_name = os.path.splitext(file_name)[0][30:]
         file_html = file_name + '.html'
         file_url = "https://dark-sword-22.github.io/danmuG/"+file_html
         file_size = os.stat(source_path).st_size
@@ -285,9 +281,32 @@ def main(mode):
             file_size = f"{file_size}B"
         cmt_length = max(len(Read(source_path).split('\n')) - 8, 0)
         file_create_time = datetime.datetime.strptime(file_name[6:6+23], '%Y-%m-%d-%H-%M-%S-%f')
-        fl.append((file_url, file_html, file_create_time, file_size, cmt_length))
-    fl.sort(key = lambda x:x[2], reverse = True)
-    index_html = jinja22(fl)
+        struct.append({
+            'full_name': file_name,
+            'display_name': stream_name,
+            'size': file_size,
+            'length': cmt_length,
+            'href': file_url,
+            'finished': None,
+            'datetime': str(file_create_time)[:19],
+            'cttime': file_create_time,
+        })
+
+    struct.sort(key = lambda x:x['cttime'], reverse=True)
+    finished_data = json.loads(requests.get('https://dog.464933.xyz/api/fetch-accomplishment-rate').text)
+    for key, value in finished_data.items():
+        for _ in struct:
+            if _['full_name'][:29] == key:
+                _['finished'] = value
+    for _ in struct: 
+        del _['cttime']
+        if _['finished']:
+            _['health'] = min(max(round(_['finished'] *100/ _['length'],1),0),100)
+        else:
+            _['health'] = "NaN"
+        del _['finished']
+    superman_data = json.loads(requests.get('https://dog.464933.xyz/api/fetch-superman').text)
+    index_html = jinja22(struct, superman_data)
     Write(os.path.join(dst_dir, 'index.html'), index_html)
     Write('README.md', Read('README.md') + ' ')
 

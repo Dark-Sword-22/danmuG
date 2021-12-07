@@ -85,8 +85,7 @@ async def determine_if_cmt_public(session, target_progress, cid, target_cmt):
         return False
 
 
-async def git_pull(self):
-    self.logger.debug("Git pull triggered")
+async def git_pull(loop):
     # return
     def wraper():
         try:
@@ -96,5 +95,4 @@ async def git_pull(self):
             os.system("git pull")
         except:
             ...
-    await self.loop.run_in_executor(None, wraper)
-    self.logger.info("Git pulled")
+    await loop.run_in_executor(None, wraper)

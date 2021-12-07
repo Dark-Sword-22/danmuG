@@ -168,6 +168,7 @@ class Fisherman:
         self.q = None
         self.dmc = None
         self._cmt_buffer = deque()
+        self._long_cmt_unique_buff = deque() # 重复的长弹幕一般都是刷的
         self._buffer_limit = 100
         self._buffer_count = dict()
         self._buffer_last_refresh_time = time.time()
@@ -184,20 +185,56 @@ class Fisherman:
             '晦气，晦气啊！',
             '急了 他急了 主播他急了',
             '您的客户端较老，暂不支持显示表情',
+            '手气好没办法！',
+            '大家快抢，晚了就没了！',
+            '恭喜发财！',
+            '谁能抢得过我？',
+            '下亿把必能赢',
         }
+        self._biliibli_block_set = ( 
+            # 根据弹幕重投失败反馈的B站弹幕拦截关键字
+            # 也许与用户等级低有关也说不定
+            # 总之可以看得出阿B真的很敏感
+            'cc',
+            'CC',
+            'cnm',
+            'CNM',
+            'cao',
+            'CAO',
+            'kale',
+            'KALE',
+            '艹',
+            '狗比',
+            '拉.{0,1}屎',
+            '本子',
+            '主播',
+            '好烧',
+            '骚',
+            '倪哥',
+            '尼哥',
+            '想透',
+            '紧身衣',
+            '工人运动',
+            'userCard',
+            '一天不振',
+            '土豪我们',
+            '谢谢老板',
+            '小鬼',
+            '孝子',
+            '贴吧',
+            '节奏',
+            'fuck',
+            'FUCK',
+            '法克'
+        )
         self._re_block_set = (
             re.compile("感谢.*大佬"),
             re.compile("\[emts\][\s\S]*?\[/emts\]"),
             re.compile("\[img\][\s\S]*?\[/img\]"),
             re.compile("<b>.+</b>"),
-            re.compile("(cc|CC)"),
-            re.compile("(cnm|CNM)"),
-            re.compile("(cao|CAO)"),
-            re.compile("(kale|KALE)"),
-            re.compile("艹"),
-            re.compile("狗比"),
+            re.compile(f"({'|'.join(self._biliibli_block_set)})")
         )
-        self._string_filter = lambda x: x.replace('\r\n',' ').replace('\n',' ').strip()
+        self._string_filter = lambda x: x.replace('\r\n',' ').replace('\r',' ').replace('\n',' ').strip()
 
     def ddos_protect(self, cmt):
         '''
@@ -335,6 +372,17 @@ class Fisherman:
         await self.loop.run_in_executor(None, wraper)
         self.logger.info("Git pulled")
 
+    def long_cmt_check(self, cmt):
+        if len(cmt) < 15:
+            return cmt
+        if cmt in self._long_cmt_unique_buff:
+            return None
+        else:
+            self._long_cmt_unique_buff.append(cmt)
+            while len(self._long_cmt_unique_buff) > 50:
+                self._long_cmt_unique_buff.popleft()
+            return cmt
+
     async def message_hanlder(self, writer_prepared, close_pushed):
         self.logger.info("开辟新的写入线程")
         title, _ = await asyncio.gather(self.get_stream_title(), self.git_pull())
@@ -347,12 +395,17 @@ class Fisherman:
             if m['msg_type'] == 'danmaku':
                 cmt = m["content"]
                 self.logger.info(f'cmt - {m["name"]}：{m["content"]}')
-                cmt = self.ddos_protect(cmt)
+                cmt = self._long_cmt_unique_buff.append(cmt)
                 if cmt:
-                    writer.update(self._string_filter(cmt))
+                    cmt = self.ddos_protect(cmt)
+                    if cmt:
+                        cmt = self._string_filter(cmt)
+                        if '\n' not in cmt:
+                            writer.update(cmt)
             elif m['msg_type'] == 'close':
                 self.logger.info("接收到终止信号，写入线程退出")
                 self.ddos_reset()
+                self._long_cmt_unique_buff = deque()
                 await self.git_push()
                 close_pushed.set_result(None)
                 return 
