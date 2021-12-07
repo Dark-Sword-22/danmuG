@@ -239,7 +239,7 @@ class Worker:
                 if self.proxy:
                     rsession.proxies = self.proxy
                 rsession.mount('https://api.bilibili.com', HTTP20Adapter())
-                resp = rsession.post(api_url, data=payload, headers=headers, cookies=cookies, proxies = None if self.proxy == False else self.proxy)
+                resp = rsession.post(api_url, data=payload, headers=headers, cookies=cookies)
                 if resp.status_code == 200:
                     res = resp.text
                     self.logger.debug(f"步骤3反馈 - {res}")
