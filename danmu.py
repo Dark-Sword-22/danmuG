@@ -373,7 +373,7 @@ class Fisherman:
         self.logger.info("Git pulled")
 
     def long_cmt_check(self, cmt):
-        if len(cmt) < 15:
+        if len(cmt) < 13:
             return cmt
         if cmt in self._long_cmt_unique_buff:
             return None
@@ -395,7 +395,7 @@ class Fisherman:
             if m['msg_type'] == 'danmaku':
                 cmt = m["content"]
                 self.logger.info(f'cmt - {m["name"]}：{m["content"]}')
-                cmt = self._long_cmt_unique_buff.append(cmt)
+                cmt = self.long_cmt_check(cmt)
                 if cmt:
                     cmt = self.ddos_protect(cmt)
                     if cmt:
