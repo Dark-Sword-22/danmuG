@@ -23,7 +23,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install pipeit pyecharts==1.9.1 beautifulsoup4 lxml numpy scipy gensim jieba aiohttp
+        python -m pip install pipeit pyecharts==1.9.1 beautifulsoup4 lxml numpy scipy gensim jieba aiohttp requests
     - name: Get video metas
       run: |
         python informations.py
