@@ -30,6 +30,9 @@ class AsyncIteratorWrapper:
         return value
 
 class ConfigParser:
+    '''
+    随手写的parser
+    '''
 
     def __init__(self):
         self.text = ''
@@ -130,6 +133,11 @@ class SelectorManager:
         ps_proc.kill()
 
 class EpolledTailFile:
+    '''
+    会创建一个独立于主事件循环线程之外的，线程的，epoll选择器。
+    epoll需要设置timeout以避免日志无更新的长期阻塞情况。
+    同时使用了ThreadPoolExecutorPlus里的线程池，以解决py默认线程池不会缩减的问题。
+    '''
 
     pool = ThreadPoolExecutor()
 

@@ -243,6 +243,10 @@ async def ws_log_danmug(websocket: WebSocket, token: str = ''):
     '''
     查看系统日志的后端， ws 实时推流理论上结果应与 ssh tail -f 输出一致。
     维护 tail-f 的 fd event_read 的 selector 放在另一线程池里。
+    这里额外加入一个 ws 撞针，如果没有撞针的话，执行顺序是先获取更新再发送 ws ，
+    在 fd 没有更新的时候获取线程会一直 pending ，而 fastapi 的 ws 断连本身不会异常
+    只有向断连 ws 继续发送时才会报异常。导致没有撞针时即使断连占用的资源也无法释放。
+    当然 epoll 本身也要 timeout 否则会一直在挂起队列上。
     '''
     if not hmac.compare_digest(token, logsecret):
         return HTTPException(status_code=403, detail="403 Forbidden")
