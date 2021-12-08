@@ -234,7 +234,7 @@ async def html_log_danmug(token: str = ''):
     '''
     if not hmac.compare_digest(token, logsecret):
         return HTTPException(status_code=403, detail="403 Forbidden")
-    async with aiofiles.open(os.path.abspath('../templates/log.html'), mode='r') as f:
+    async with aiofiles.open(os.path.abspath('../templates/htmllog.html'), mode='r') as f:
         html = await f.read()
         return HTMLResponse(html.replace("{{service_name}}", "danmuG").replace("{{secret}}", token))
 
