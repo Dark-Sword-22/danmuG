@@ -9,7 +9,7 @@ from fastapi import FastAPI, Request, Header, WebSocket, HTTPException, WebSocke
 from fastapi.responses import ORJSONResponse, HTMLResponse
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from dmutils import AsyncIteratorWrapper, git_pull, ConfigParser, EpolledTailFile
+from dmutils import AsyncIteratorWrapper, git_pull, ConfigParser, EpolledTailFile, ws_coro_main, ws_coro_heartbeat
 from dmdb import *
 
 import platform 
@@ -251,9 +251,7 @@ async def ws_log_danmug(websocket: WebSocket, token: str = ''):
     await websocket.accept()
     try:
         async_reader.start_listen()
-        while True:
-            line = await async_reader.upstream()
-            await websocket.send_text(line)
+        await asyncio.gather(ws_coro_heartbeat(websocket), ws_coro_main(async_reader, websocket))
     except:
         ...
     finally:
@@ -283,9 +281,7 @@ async def ws_log_danmug(websocket: WebSocket, token: str = ''):
     await websocket.accept()
     try:
         async_reader.start_listen()
-        while True:
-            line = await async_reader.upstream()
-            await websocket.send_text(line)
+        await asyncio.gather(ws_coro_heartbeat(websocket), ws_coro_main(async_reader, websocket))
     except:
         ...
     finally:

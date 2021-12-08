@@ -190,3 +190,14 @@ class EpolledTailFile:
 
     def close(self):
         self._close = True
+
+
+async def ws_coro_main(reader, ws):
+    while True:
+        line = await reader.upstream()
+        await ws.send_text(line)
+
+async def ws_coro_heartbeat(ws):
+    while True:
+        await asyncio.sleep(3)
+        await ws.send_text('')
