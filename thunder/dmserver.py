@@ -189,7 +189,7 @@ async def html_log_danmug(token: str = ''):
         return HTTPException(status_code=403, detail="403 Forbidden")
     async with aiofiles.open(os.path.abspath('../templates/log.html'), mode='r') as f:
         html = await f.read()
-        return HTMLResponse(html)
+        return HTMLResponse(html.replace("{{service_name}}", "danmuG"))
 
 @app.websocket('/ws/danmuG')
 async def ws_log_danmug(websocket: WebSocket, token: str = ''):
@@ -210,12 +210,15 @@ async def ws_log_danmug(websocket: WebSocket, token: str = ''):
 async def html_log_danmug(token: str = ''):
     if not hmac.compare_digest(token, logsecret):
         return HTTPException(status_code=403, detail="403 Forbidden")
+    async with aiofiles.open(os.path.abspath('../templates/htmllog.html'), mode='r') as f:
+        html = await f.read()
+        return HTMLResponse(html.replace("{{service_name}}", "server"))
     return HTMLResponse(html)
 
 @app.websocket('/ws/server')
 async def ws_log_danmug(websocket: WebSocket, token: str = ''):
-    file_path = os.path.abspath('../log_out.txt')
-    async_reader = EpolledTailFile('www.google.com')
+    file_path = os.path.abspath('../slog_out.txt')
+    async_reader = EpolledTailFile(file_path)
     await websocket.accept()
     try:
         async_reader.start_listen()

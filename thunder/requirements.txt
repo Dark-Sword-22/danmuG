@@ -6,3 +6,5 @@ orjson
 sqlalchemy
 aiofiles
 aiosqlite
+psutil
+ThreadPoolExecutorPlus
