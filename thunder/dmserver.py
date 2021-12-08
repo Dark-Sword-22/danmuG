@@ -18,6 +18,20 @@ if osName=='Linux':
     import uvloop
     uvloop.install()
 
+'''
+配置于127.0.0.1:2222单线程异步服务器，前面肯定还要接nginx的，配合limit_req_zone总体处于性能堪用水平。
+
+配置文件范例: 
+
+# server_config.ini
+[secrets]
+webhook_secret=example-token
+trust_list=["example.com","*.example.com"]
+dev=false
+host="127.0.0.1"
+port=2222
+logsecret="example-token-2"
+'''
 
 file_dir = os.path.dirname(os.path.realpath(__file__))
 cfg_path = os.path.join(file_dir, "server_config.ini")
@@ -39,6 +53,7 @@ if not dev:
 sqlite_db = {'drivername': 'sqlite+aiosqlite', 'database': 'sqlite.db'}
 engine = create_async_engine(URL.create(**sqlite_db), echo=True, future=True, connect_args={"check_same_thread": False})
 
+# 异常表
 error_codes = [
     [{"loc":["query","qid"],"msg":"illegal value, cmt status incorrect","type":"value_error"}], # -1
     [{"loc":["query","bvid"],"msg":"illegal video","type":"value_error"}],                      # -2
@@ -54,6 +69,9 @@ msg_core = {}
 
 @app.on_event("startup")
 async def startup():
+    '''
+    初始扫描服务器，结束时关闭连接池
+    '''
     await scan_and_reload(engine)
     loop = asyncio.get_running_loop()
     loop.create_task(clean_task_daemon(engine, msg_core))
@@ -64,6 +82,9 @@ async def shutdown():
 
 @app.middleware("http")
 async def response_logger_hacking(request: Request, call_next):
+    '''
+    接管uvicorn的default logger
+    '''
     start_time = time.time()
     response = await call_next(request)
     process_time = time.time() - start_time
@@ -80,6 +101,11 @@ async def response_logger_hacking(request: Request, call_next):
 @app.get("/api/quest-apply", response_class=ORJSONResponse)
 async def get_archive_earliest(mode: Literal["auto", "specified"], bvid: Optional[str] = None) -> dict:
     async_session = sessionmaker(engine, expire_on_commit=True, class_=AsyncSession)
+    '''
+    一个投递流程分为三步， client 先获取任务，再确认要提交的任务，最后确认已经提交成功。
+    其对应的后端 status 为 0,1,3
+    目前这个 handler 处理的是第一步，可以指定 BVID 或者选择自动获取最担心
+    '''
     async with async_session() as session:
         async with session.begin():
             dal = DAL(engine, session, msg_core)
@@ -95,6 +121,10 @@ async def get_archive_earliest(mode: Literal["auto", "specified"], bvid: Optiona
 
 @app.get("/api/quest-confirm", response_class=ORJSONResponse)
 async def client_confirm_quest(bvid: str, qid: int, token: str) -> dict:
+    '''
+    见 get_archive_earliest
+    确认任务并修改状态至 1
+    '''
     async_session = sessionmaker(engine, expire_on_commit=True, class_=AsyncSession)
     async with async_session() as session:
         async with session.begin():
@@ -109,6 +139,11 @@ async def client_confirm_quest(bvid: str, qid: int, token: str) -> dict:
 
 @app.get("/api/quest-success", response_class=ORJSONResponse)
 async def client_declare_succeeded(bvid: str, qid: int, token: str, wdcr: str = 'anonymous') -> dict:
+    '''
+    见 get_archive_earliest
+    检查投递成功并更新状态。限制最大用户名长度作为防止xss的另一层手段。
+    如果用户为匿名则默认从两个用户名中选一个。
+    '''
     if wdcr == 'anonymous':
         wdcr = random.sample(('神秘好哥哥', '缺神'), 1)[0]
     if len(wdcr) > 15:
@@ -128,6 +163,9 @@ async def client_declare_succeeded(bvid: str, qid: int, token: str, wdcr: str = 
 lu_buffer_man = {datetime.datetime(2002,2,22): []}
 @app.get('/api/fetch-superman', response_class=ORJSONResponse)
 async def fetch_superman() -> dict:
+    '''
+    静态页面更新用 actions 更新时向后端请求最新贡献榜单。
+    '''
     last_update_time = tuple(lu_buffer_man.keys())[0]
     current_time = datetime.datetime.now()
     if (current_time - last_update_time).total_seconds() < 120:
@@ -145,6 +183,9 @@ async def fetch_superman() -> dict:
 lu_buffer_rate = {datetime.datetime(2002,2,22): []}
 @app.get('/api/fetch-accomplishment-rate', response_class=ORJSONResponse)
 async def fetch_accomplishment_rate() -> dict:
+    '''
+    静态页面更新用 actions 更新时向后端请求视频投稿完成度。
+    '''
     last_update_time = tuple(lu_buffer_rate.keys())[0]
     current_time = datetime.datetime.now()
     if (current_time - last_update_time).total_seconds() < 600:
@@ -163,6 +204,9 @@ async def fetch_accomplishment_rate() -> dict:
 pull_stack = []
 @app.post("/github-webhook", response_class=ORJSONResponse)
 async def github_webhook_activated(req: Request, X_Hub_Signature_256: Optional[str] = Header(None, convert_underscores=True)):
+    '''
+    用于接受 github push 钩子事件。使 data 中的数据一直保持最新，并触发更新模块，数据库也会对应进行增删。
+    '''
     payload = await req.body()
     res = hmac.compare_digest(hmac.new(webhook_secret.encode(), payload , digestmod = sha256).hexdigest(), X_Hub_Signature_256[7:])
     if res:
@@ -185,14 +229,23 @@ async def github_webhook_activated(req: Request, X_Hub_Signature_256: Optional[s
 
 @app.get("/log/danmuG")
 async def html_log_danmug(token: str = ''):
+    '''
+    查看系统日志的 html 前端，做了简单的 token 认证，配合 https 问题不是很大。
+    '''
     if not hmac.compare_digest(token, logsecret):
         return HTTPException(status_code=403, detail="403 Forbidden")
     async with aiofiles.open(os.path.abspath('../templates/log.html'), mode='r') as f:
         html = await f.read()
-        return HTMLResponse(html.replace("{{service_name}}", "danmuG"))
+        return HTMLResponse(html.replace("{{service_name}}", "danmuG").replace("{{secret}}", token))
 
 @app.websocket('/ws/danmuG')
 async def ws_log_danmug(websocket: WebSocket, token: str = ''):
+    '''
+    查看系统日志的后端， ws 实时推流理论上结果应与 ssh tail -f 输出一致。
+    维护 tail-f 的 fd event_read 的 selector 放在另一线程池里。
+    '''
+    if not hmac.compare_digest(token, logsecret):
+        return HTTPException(status_code=403, detail="403 Forbidden")
     file_path = os.path.abspath('../log_out.txt')
     async_reader = EpolledTailFile(file_path)
     await websocket.accept()
@@ -200,7 +253,7 @@ async def ws_log_danmug(websocket: WebSocket, token: str = ''):
         async_reader.start_listen()
         while True:
             line = await async_reader.upstream()
-            await websocket.send_text(f"Message text was: {line}")
+            await websocket.send_text(line)
     except:
         ...
     finally:
@@ -208,15 +261,23 @@ async def ws_log_danmug(websocket: WebSocket, token: str = ''):
 
 @app.get("/log/server")
 async def html_log_danmug(token: str = ''):
+    '''
+    重复逻辑，见 html_log_danmug 和 ws_log_danmug 部分
+    '''
     if not hmac.compare_digest(token, logsecret):
         return HTTPException(status_code=403, detail="403 Forbidden")
     async with aiofiles.open(os.path.abspath('../templates/htmllog.html'), mode='r') as f:
         html = await f.read()
-        return HTMLResponse(html.replace("{{service_name}}", "server"))
+        return HTMLResponse(html.replace("{{service_name}}", "server").replace("{{secret}}", token))
     return HTMLResponse(html)
 
 @app.websocket('/ws/server')
 async def ws_log_danmug(websocket: WebSocket, token: str = ''):
+    '''
+    重复逻辑，见 html_log_danmug 和 ws_log_danmug 部分
+    '''
+    if not hmac.compare_digest(token, logsecret):
+        return HTTPException(status_code=403, detail="403 Forbidden")
     file_path = os.path.abspath('../slog_out.txt')
     async_reader = EpolledTailFile(file_path)
     await websocket.accept()
@@ -224,7 +285,7 @@ async def ws_log_danmug(websocket: WebSocket, token: str = ''):
         async_reader.start_listen()
         while True:
             line = await async_reader.upstream()
-            await websocket.send_text(f"Message text was: {line}")
+            await websocket.send_text(line)
     except:
         ...
     finally:

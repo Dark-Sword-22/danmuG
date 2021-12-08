@@ -1,34 +1,77 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Chat</title>
+        <title>LOG PREVIEW</title>
+        <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14"></script>
     </head>
     <body>
-        <h1>WebSocket Chat</h1>
-        <form action="" onsubmit="sendMessage(event)">
-            <input type="text" id="messageText" autocomplete="off"/>
-            <button>Send</button>
-        </form>
-        <ul id='messages'>
-        </ul>
+        <div id='app'>
+            <h1>LOG PREVIEW</h1>
+            <ul>
+                <li v-for="(obj, i) in messages">{{obj}}, {{i}}</li>
+            </ul>
+        </div>
+        
         <script>
-            let protocal = document.location.protocol==='https:'?'s':''
-            let port = document.location.port === '' ? '':':' + document.location.port
-            let wsurl = 'ws'+protocal+'://' + window.location.host + port + '/ws/{{service_name}}'
-            var ws = new WebSocket(wsurl);
-            ws.onmessage = function(event) {
-                var messages = document.getElementById('messages')
-                var message = document.createElement('li')
-                var content = document.createTextNode(event.data)
-                message.appendChild(content)
-                messages.appendChild(message)
-            };
-            function sendMessage(event) {
-                var input = document.getElementById("messageText")
-                ws.send(input.value)
-                input.value = ''
-                event.preventDefault()
+            var app = new Vue({
+              el: '#app',
+              data: {
+                messages: [],
+                max_length: 1000,
+            },
+            mounted(){
+              let that = this
+              let protocal = document.location.protocol==='https:'?'s':''
+              let port = document.location.port === '' ? '':':' + document.location.port
+              let wsurl = 'ws'+protocal+'://' + window.location.host + port + '/ws/{{service_name}}'
+              wsurl += '?token={{secret}}'
+              var ws = new WebSocket(wsurl);
+              ws.onmessage = function(event) {
+                  let scroll = that.scollbar_atbottom()
+                  datalines = event.data.split('\n')
+                  if (datalines.length > 0) {
+                      if (datalines[datalines.length - 1] === '') {
+                          datalines.pop()
+                      }
+                      that.messages.push(...datalines)
+                      while (that.messages.length > that.max_length) {
+                          that.messages.shift()
+                      }
+                  }
+                  if (scroll) {
+                    window.setTimeout(that.scroll_to_bottom,20)
+                  }
+                }
+            },
+            methods: {
+              getScrollTop() {
+                  var scrollTop=0;
+                  if(document.documentElement&&document.documentElement.scrollTop) {
+                      scrollTop=document.documentElement.scrollTop;
+                  }
+                  else if(document.body)  {
+                      scrollTop= document.body.scrollTop;
+                  }
+                  return  Math.ceil(scrollTop);
+              },
+              getScrollBarHeight(){
+                  let scrollBarHeight = document.documentElement.clientHeight;
+                  return Math.ceil(scrollBarHeight);
+              },
+              getPageHeight()  {
+                  return Math.ceil(Math.max(document.body.clientHeight,document.documentElement.scrollHeight));
+              },
+              scollbar_atbottom(){
+                  if(this.getScrollTop() + this.getScrollBarHeight() >= this.getPageHeight()){
+              　　　　return true
+              　　}
+                  return false
+              },
+              scroll_to_bottom(){
+                  window.scrollTo(0, document.body.scrollHeight)
+              }
             }
+          })
         </script>
     </body>
 </html>
