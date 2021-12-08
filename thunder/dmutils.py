@@ -156,7 +156,7 @@ class EpolledTailFile:
         with SelectorManager(proc) as selector:
             while True:
                 if self._close: break
-                events = selector.select()
+                events = selector.select(timeout=10)
                 for key, _ in events:
                     self.loop.call_soon_threadsafe(partial(self.addline, proc.stdout))
 
