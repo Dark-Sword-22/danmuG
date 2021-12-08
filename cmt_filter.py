@@ -10,38 +10,63 @@ for files in os.walk(src_dir):
 files.sort(key = lambda x: datetime.datetime.strptime(x[6:6+23], '%Y-%m-%d-%H-%M-%S-%f'), reverse = True)
 files = files[:100]
 
-flt_pats = (
-    '\n[0-9-: \.]+ - [0-9-: \.]+ - \.',
-    '\n[0-9-: \.]+ - [0-9-: \.]+ - 1',
-    '\n[0-9-: \.]+ - [0-9-: \.]+ - 2',
-    '\n[0-9-: \.]+ - [0-9-: \.]+ - 3',
-    '\n[0-9-: \.]+ - [0-9-: \.]+ - 阻碍我的 豆浆烩面！',
-    '\n[0-9-: \.]+ - [0-9-: \.]+ - 宝，我能做你的掌中宝嘛~',
-    '\n[0-9-: \.]+ - [0-9-: \.]+ - 阻碍我的 豆浆烩面！',
-    '\n[0-9-: \.]+ - [0-9-: \.]+ - 宝，我能做你的掌中宝嘛~',
-    '\n[0-9-: \.]+ - [0-9-: \.]+ - 浑身都充满了阴阳怪气！',
-    '\n[0-9-: \.]+ - [0-9-: \.]+ - 阴阳怪气充盈，随时可化身杠精',
-    '\n[0-9-: \.]+ - [0-9-: \.]+ - 晦气，晦气啊！',
-    '\n[0-9-: \.]+ - [0-9-: \.]+ - 急了 他急了 主播他急了',
-) | Map(lambda x: re.compile(x)) | tuple
+_biliibli_block_set = ( 
+    # 根据弹幕重投失败反馈的B站弹幕拦截关键字
+    # 也许与用户等级低有关也说不定
+    # 总之可以看得出阿B真的很敏感
+    '豆浆烩面！',
+    '掌中宝嘛~',
+    '充满了阴阳怪气',
+    '阴阳怪气充盈',
+    '一天不振',
+    '晦气，晦气啊',
+    'cc',
+    'CC',
+    'cnm',
+    'CNM',
+    'cao',
+    'CAO',
+    'kale',
+    'KALE',
+    '艹',
+    '狗比',
+    '拉.{0,1}屎',
+    '本子',
+    '主播',
+    '好烧',
+    '骚',
+    '倪哥',
+    '尼哥',
+    '想透',
+    '紧身衣',
+    '工人运动',
+    'userCard',
+    '土豪我们',
+    '谢谢老板',
+    '小鬼',
+    '孝子',
+    '贴吧',
+    '节奏',
+    'fuck',
+    'FUCK',
+    '法克'
+)
+
 
 key_word_pats = (
-    re.compile('(cc|CC|cnm|CNM|cao|CAO|kale|KALE|艹|狗比|拉屎|本子|主播)'),
+    re.compile(f'({"|".join(_biliibli_block_set)})'),
 )
 
 for file_name in files:
     file_path = os.path.join(src_dir, file_name)
     text = Read(file_path)
-    for pat in flt_pats:
-        scaned = pat.search(text)
-        while scaned:
-            text = text[:scaned.start()] + text[scaned.end():]
-            scaned = pat.search(text)
-    # 
+
     text = text.split('\n')
     text_new = text[:8] | Map(lambda x:x + '\n') | list
     for line in text[8:]:
         for pat in key_word_pats:
+            if len(line) == 38 and line[-1] in ['.','1','2','3']:
+                break
             if pat.search(line):
                 break
         else:

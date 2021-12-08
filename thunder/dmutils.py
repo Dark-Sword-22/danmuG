@@ -2,6 +2,14 @@ from lxml import etree
 from pipeit import *
 import re
 import os
+import subprocess
+import asyncio
+import locale
+import codecs
+import psutil
+from selectors import DefaultSelector, EVENT_READ, EVENT_WRITE
+from collections import deque
+from functools import partial
 
 char_scaner = re.compile('[\u3002\uff1b\uff0c\uff1a\u201c\u201d\uff08\uff09\u3001\uff1f\u300a\u300b\u4E00-\u9FA5\x00-\x7f]+')
 
@@ -96,3 +104,85 @@ async def git_pull(loop):
         except:
             ...
     await loop.run_in_executor(None, wraper)
+
+
+class SelectorManager:
+
+    def __init__(self, proc):
+        self.proc = proc
+        self.fileobj = proc.stdout
+        self._selector = DefaultSelector()
+
+    def __enter__(self):
+        self._selector.register(self.fileobj, EVENT_READ, None)
+        return self._selector
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._selector.unregister(self.fileobj)
+        self._selector.close()
+        self._kill_proc()
+
+    def _kill_proc(self):
+        ps_proc = psutil.Process(self.proc.pid)
+        for ps_proc_c in ps_proc.children(recursive=True):
+            ps_proc_c.kill()
+        ps_proc.kill()
+
+class EpolledTailFile:
+
+    def __init__(self, file_name, encoding=None, n=50):
+        self.file_name = file_name
+        self.encoidng = encoding
+        self.n = n
+        if encoding == None:
+            self.encoding = codecs.lookup(locale.getpreferredencoding()).name
+        self.ready_lines = deque()
+        self.read_wait = None
+        self._close = False
+
+    def _listener_daemon(self):
+        proc = subprocess.Popen(
+            f'ping -n 100 {self.file_name}', 
+            stdin=subprocess.PIPE, 
+            stdout=subprocess.PIPE, 
+            shell=True,
+            close_fds=True,
+        )
+        os.set_blocking(proc.stdout.fileno(), False)
+        with SelectorManager(proc) as selector:
+            while True:
+                if self._close: break
+                events = selector.select()
+                for key, _ in events:
+                    self.loop.call_soon_threadsafe(partial(self.addline, proc.stdout))
+
+    def addline(self, fileobj):
+        buf = bytearray()
+        while True:
+            rd = fileobj.readline()
+            if len(rd) == 0:
+                break
+            buf += rd
+        if len(buf) > 0:
+            self.ready_lines.append(buf)
+            if self.read_wait and not self.read_wait.is_set():
+                self.read_wait.set()
+
+    async def upstream(self):
+        loop = asyncio.get_running_loop()
+        while True:
+            if self.ready_lines:
+                self.read_wait = None
+                res = bytearray()
+                while self.ready_lines:
+                    res += self.ready_lines.popleft()
+                return res.decode(self.encoding, errors='replace')
+            self.read_wait = asyncio.Event()
+            await self.read_wait.wait()
+
+    def start_listen(self):
+        self.loop = asyncio.get_running_loop()
+        self.loop.run_in_executor(None, self._listener_daemon)
+
+    def close(self):
+        self._close = True
