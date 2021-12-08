@@ -23,6 +23,7 @@
               let that = this
               let protocal = document.location.protocol==='https:'?'s':''
               let port = document.location.port === '' ? '':':' + document.location.port
+              port=''
               let wsurl = 'ws'+protocal+'://' + window.location.host + port + '/ws/{{service_name}}'
               wsurl += '?token={{secret}}'
               var ws = new WebSocket(wsurl);
