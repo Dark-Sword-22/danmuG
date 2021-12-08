@@ -224,7 +224,8 @@ class Worker:
         }
         for _ in range(2):
             try:
-                # 因为发现asyncio的post模块似乎用pyinstaller打包会遇到bug，G了
+                # # 因为发现asyncio的post模块似乎用pyinstaller打包会遇到bug，G了
+
                 # async with session.post(api_url, data=payload, headers=headers, cookies=cookies) as resp:
                 #     if resp.status == 200:
                 #         res = await resp.text()
