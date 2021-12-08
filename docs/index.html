@@ -18,12 +18,18 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
   </head>
   <body style="margin:0;padding:0">
-    <div id="app" class="min-h-screen" style="background-color: #e0e5ec">
+    <div id="app" class="absolute w-full min-h-screen" style="background-color: #e0e5ec">
+      <div class="absolute h-full w-full overflow-hidden flex flex-row-reverse">
+        <img class="absolute z-0" style="opacity:0.9" src='./qmm.webp' />
+      </div>
+      
       <div class="absolute w-screen h-screen" style="pointer-events: none;">
         <div ref="plus1s" class="w-10 text-gray-900 text-xs px-1.5 rounded absolute animate__animated" style="opacity:1;display:block;top:-30px;left:-30px">+22</div>
       </div>
+
       <div class="flex flex-col w-full">
-        <div class="flex-initial pl-4 pb-4 pt-4 w-full flex flex-col items-center mt-4">
+
+        <div class="flex-initial pl-4 pb-4 pt-4 w-full flex flex-col items-center mt-4 z-10">
           <a href='https://github.com/Dark-Sword-22/danmuG'><h1 class="font-extrabold text-3xl text-gray-700 tracking-wide">秦国弹幕姬</h1></a>
           <h4 class="font-medium text-lg mt-2">受伤倒地是否做错了什么</h4>
         </div>
@@ -94,24 +100,32 @@
             </template>
           </b-table>
         </div>
-        <div class="flex flex-col items-center mb-20">
+        <div class="flex flex-col items-center mb-6">
           <div class="flex-none ml-4 flex flex-row-reverse mt-4 select-none" id="tail" style="width:380px;opacity:1">
-            <div class="pt-0.5">
+            <div class="pt-0.5 z-10">
               <a href="#plus22s" id="plus22s" @click="refresh_img" ref="plus22s" class="outline-none">
                 <img :src="tag_src">
               </a>
             </div>
-            <div>
-              <a href="https://github.com/Dark-Sword-22/danmuG#我们做了什么"><span class="text-gray-500 font-light text-sm mr-1">本项目需要你的帮助，点我了解？</span></a>
+            <div class="z-10">
+              <a href="https://github.com/Dark-Sword-22/danmuG#我们做了什么"><span class="text-gray-500 font-light text-sm mr-1">本项目需要你的帮助,点我了解？</span></a>
             </div>
           </div>
         </div>
       </div>
+
+      <div class="z-100 w-full h-14 flex flex-row-reverse">
+        <div class="absolute mr-10 text-gray-600">
+          <div>Illustrators: hinanawi_mika</div>
+          <div>Pixiv: 19302213</div>
+        </div>
+      </div>
     </div>
+    
   </body>
   <script src="https://unpkg.com/buefy/dist/buefy.min.js"></script>
   <script>
-    const superman = JSON.parse('[{"name": "\\u72c2\\u66b4\\u5339\\u683c", "datetime": "2021-12-08 13:14:54", "wordcount": 44159}, {"name": "\\u7f3a\\u795e", "datetime": "2021-12-04 12:59:46", "wordcount": 570}, {"name": "\\u795e\\u79d8\\u597d\\u54e5\\u54e5", "datetime": "2021-12-04 12:58:47", "wordcount": 569}]')
+    const superman = JSON.parse('[{"name": "\\u72c2\\u66b4\\u5339\\u683c", "datetime": "2021-12-08 13:14:54", "wordcount": 44159}, {"name": "\\u7f3a\\u795e", "datetime": "2021-12-04 12:59:46", "wordcount": 570}, {"name": "\\u795e\\u79d8\\u597d\\u54e5\\u54e5", "datetime": "2021-12-04 12:58:47", "wordcount": 569},{"name": "\\u72c2\\u66b4\\u5339\\u683c", "datetime": "2021-12-08 13:14:54", "wordcount": 44159}]')
     const data = JSON.parse('[{"full_name": "danmu-2021-12-07-20-00-22-493-\\u3010Quin\\u3011\\u200d\\u54c1\\u5473\\u5149\\u73af4", "display_name": "\\u3010Quin\\u3011\\u200d\\u54c1\\u5473\\u5149\\u73af4", "size": "958.32KB", "length": 17401, "href": "https://dark-sword-22.github.io/danmuG/danmu-2021-12-07-20-00-22-493-\\u3010Quin\\u3011\\u200d\\u54c1\\u5473\\u5149\\u73af4.html", "datetime": "2021-12-07 20:00:22", "health": "NaN"}, {"full_name": "danmu-2021-12-06-20-11-58-688-\\u3010Quin\\u3011\\u200d\\u54c1\\u5473\\u5149\\u73af3", "display_name": "\\u3010Quin\\u3011\\u200d\\u54c1\\u5473\\u5149\\u73af3", "size": "836.54KB", "length": 15456, "href": "https://dark-sword-22.github.io/danmuG/danmu-2021-12-06-20-11-58-688-\\u3010Quin\\u3011\\u200d\\u54c1\\u5473\\u5149\\u73af3.html", "datetime": "2021-12-06 20:11:58", "health": "NaN"}, {"full_name": "danmu-2021-12-04-19-38-19-333-\\u3010Quin\\u3011\\u200d\\u54d1\\u5df4\\u76f4\\u64ad\\u95f4", "display_name": "\\u3010Quin\\u3011\\u200d\\u54d1\\u5df4\\u76f4\\u64ad\\u95f4", "size": "741.94KB", "length": 13930, "href": "https://dark-sword-22.github.io/danmuG/danmu-2021-12-04-19-38-19-333-\\u3010Quin\\u3011\\u200d\\u54d1\\u5df4\\u76f4\\u64ad\\u95f4.html", "datetime": "2021-12-04 19:38:19", "health": "NaN"}, {"full_name": "danmu-2021-11-29-19-14-22-607-\\u3010Quin\\u3011\\u200d\\u81f4\\u8fdc\\u661f\\u6218\\u51b5\\u5982\\u4f55\\uff1f", "display_name": "\\u3010Quin\\u3011\\u200d\\u81f4\\u8fdc\\u661f\\u6218\\u51b5\\u5982\\u4f55\\uff1f", "size": "1.03MB", "length": 21198, "href": "https://dark-sword-22.github.io/danmuG/danmu-2021-11-29-19-14-22-607-\\u3010Quin\\u3011\\u200d\\u81f4\\u8fdc\\u661f\\u6218\\u51b5\\u5982\\u4f55\\uff1f.html", "datetime": "2021-11-29 19:14:22", "health": 93.1}, {"full_name": "danmu-2021-11-28-20-48-21-249-\\u3010Quin\\u3011\\u200d\\u5c0f\\u5361\\u6bd4\\u517d\\u5fc5\\u79d2\\u9686\\u9686\\u5ca9", "display_name": "\\u3010Quin\\u3011\\u200d\\u5c0f\\u5361\\u6bd4\\u517d\\u5fc5\\u79d2\\u9686\\u9686\\u5ca9", "size": "542.93KB", "length": 10252, "href": "https://dark-sword-22.github.io/danmuG/danmu-2021-11-28-20-48-21-249-\\u3010Quin\\u3011\\u200d\\u5c0f\\u5361\\u6bd4\\u517d\\u5fc5\\u79d2\\u9686\\u9686\\u5ca9.html", "datetime": "2021-11-28 20:48:21", "health": 42.0}, {"full_name": "danmu-2021-11-25-20-27-52-628-\\u3010Quin\\u3011\\u200d\\u81f4\\u8fdc\\u661f\\u79d2\\u6740\\u5149\\u73af\\u65e0\\u9650", "display_name": "\\u3010Quin\\u3011\\u200d\\u81f4\\u8fdc\\u661f\\u79d2\\u6740\\u5149\\u73af\\u65e0\\u9650", "size": "666.13KB", "length": 13298, "href": "https://dark-sword-22.github.io/danmuG/danmu-2021-11-25-20-27-52-628-\\u3010Quin\\u3011\\u200d\\u81f4\\u8fdc\\u661f\\u79d2\\u6740\\u5149\\u73af\\u65e0\\u9650.html", "datetime": "2021-11-25 20:27:52", "health": 24.4}]')
   </script>
   <script>

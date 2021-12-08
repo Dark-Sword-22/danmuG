@@ -18,12 +18,16 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
   </head>
   <body style="margin:0;padding:0">
-    <div id="app" class="min-h-screen" style="background-color: #e0e5ec">
+    <div id="app" class="absolute w-full min-h-screen" style="background-color: #e0e5ec">
+      <div class="absolute h-full w-full overflow-hidden flex flex-row-reverse">
+        <img class="absolute z-0" style="opacity:0.9" src='/danmuG/qmm.webp' />
+      </div>
+
       <div class="absolute w-screen h-screen" style="pointer-events: none;">
         <div ref="plus1s" class="w-10 text-gray-900 text-xs px-1.5 rounded absolute animate__animated" style="opacity:1;display:block;top:-30px;left:-30px">+22</div>
       </div>
       <div class="flex flex-col w-full">
-        <div class="flex-initial pl-4 pb-4 pt-4 w-full flex flex-col items-center mt-4">
+        <div class="flex-initial pl-4 pb-4 pt-4 w-full flex flex-col items-center mt-4 z-10">
           <a href='https://github.com/Dark-Sword-22/danmuG'><h1 class="font-extrabold text-3xl text-gray-700 tracking-wide">秦国弹幕姬</h1></a>
           <h4 class="font-medium text-lg mt-2">受伤倒地是否做错了什么</h4>
         </div>
@@ -94,17 +98,23 @@
             </template>
           </b-table>
         </div>
-        <div class="flex flex-col items-center mb-20">
+        <div class="flex flex-col items-center mb-6">
           <div class="flex-none ml-4 flex flex-row-reverse mt-4 select-none" id="tail" style="width:380px;opacity:1">
-            <div class="pt-0.5">
+            <div class="pt-0.5 z-10">
               <a href="#plus22s" id="plus22s" @click="refresh_img" ref="plus22s" class="outline-none">
                 <img :src="tag_src">
               </a>
             </div>
-            <div>
+            <div class="z-10">
               <a href="https://github.com/Dark-Sword-22/danmuG#我们做了什么"><span class="text-gray-500 font-light text-sm mr-1">本项目需要你的帮助，点我了解？</span></a>
             </div>
           </div>
+        </div>
+      </div>
+      <div class="z-100 w-full h-14 flex flex-row-reverse">
+        <div class="absolute mr-10 text-gray-600">
+          <div>Illustrators: hinanawi_mika</div>
+          <div>Pixiv: 19302213</div>
         </div>
       </div>
     </div>
