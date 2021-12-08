@@ -10,6 +10,7 @@ import psutil
 from selectors import DefaultSelector, EVENT_READ, EVENT_WRITE
 from collections import deque
 from functools import partial
+from ThreadPoolExecutorPlus import ThreadPoolExecutor
 
 char_scaner = re.compile('[\u3002\uff1b\uff0c\uff1a\u201c\u201d\uff08\uff09\u3001\uff1f\u300a\u300b\u4E00-\u9FA5\x00-\x7f]+')
 
@@ -130,6 +131,8 @@ class SelectorManager:
 
 class EpolledTailFile:
 
+    pool = ThreadPoolExecutor()
+
     def __init__(self, file_name, encoding=None, n=50):
         self.file_name = file_name
         self.encoidng = encoding
@@ -142,7 +145,8 @@ class EpolledTailFile:
 
     def _listener_daemon(self):
         proc = subprocess.Popen(
-            f'ping -n 100 {self.file_name}', 
+            # f'ping {self.file_name}', 
+            f'tail -f {self.file_name}', 
             stdin=subprocess.PIPE, 
             stdout=subprocess.PIPE, 
             shell=True,
@@ -182,7 +186,7 @@ class EpolledTailFile:
 
     def start_listen(self):
         self.loop = asyncio.get_running_loop()
-        self.loop.run_in_executor(None, self._listener_daemon)
+        self.loop.run_in_executor(self.__class__.pool, self._listener_daemon)
 
     def close(self):
         self._close = True

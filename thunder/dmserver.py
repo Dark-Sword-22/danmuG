@@ -5,7 +5,7 @@ import uvicorn
 import orjson as json
 from hashlib import sha256
 from typing import Optional, Literal
-from fastapi import FastAPI, Request, Header, WebSocket, HTTPException
+from fastapi import FastAPI, Request, Header, WebSocket, HTTPException, WebSocketDisconnect
 from fastapi.responses import ORJSONResponse, HTMLResponse
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
@@ -187,21 +187,45 @@ async def github_webhook_activated(req: Request, X_Hub_Signature_256: Optional[s
 async def html_log_danmug(token: str = ''):
     if not hmac.compare_digest(token, logsecret):
         return HTTPException(status_code=403, detail="403 Forbidden")
-    return HTMLResponse(html)
+    async with aiofiles.open(os.path.abspath('../templates/log.html'), mode='r') as f:
+        html = await f.read()
+        return HTMLResponse(html)
 
 @app.websocket('/ws/danmuG')
 async def ws_log_danmug(websocket: WebSocket, token: str = ''):
     file_path = os.path.abspath('../log_out.txt')
-    file = EpolledTailFile('https://www.google.com')
+    async_reader = EpolledTailFile(file_path)
     await websocket.accept()
     try:
-        file.start_listen()
+        async_reader.start_listen()
         while True:
             line = await async_reader.upstream()
             await websocket.send_text(f"Message text was: {line}")
     except:
-        file.close()
-        
+        ...
+    finally:
+        async_reader.close()
+
+@app.get("/log/server")
+async def html_log_danmug(token: str = ''):
+    if not hmac.compare_digest(token, logsecret):
+        return HTTPException(status_code=403, detail="403 Forbidden")
+    return HTMLResponse(html)
+
+@app.websocket('/ws/server')
+async def ws_log_danmug(websocket: WebSocket, token: str = ''):
+    file_path = os.path.abspath('../log_out.txt')
+    async_reader = EpolledTailFile('www.google.com')
+    await websocket.accept()
+    try:
+        async_reader.start_listen()
+        while True:
+            line = await async_reader.upstream()
+            await websocket.send_text(f"Message text was: {line}")
+    except:
+        ...
+    finally:
+        async_reader.close()
 
 
 if __name__ == '__main__':
