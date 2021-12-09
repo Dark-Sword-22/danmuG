@@ -3,7 +3,7 @@
 
 秦川弹幕机器人 
 
-[https://dark-sword-22.github.io/danmuG/](https://dark-sword-22.github.io/danmuG/)
+[https://dark-sword-22.github.io](https://dark-sword-22.github.io)
 
 ## 功能说明
 大概是被设计为运行在一个服务器上，持续监视直播间，发现直播立马记录弹幕，的这么一个东西。如果你是开发人员，请查看[这里](https://github.com/Dark-Sword-22/danmuG/blob/main/misc/%E5%BC%80%E5%8F%91%E6%96%87%E6%A1%A3.md)。
