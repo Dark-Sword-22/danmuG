@@ -74,7 +74,20 @@ class Writer:
         2021-11-24 00:31:39.333 - 00:12:22.222 - zaima 
         '''
         watch_url = URL_FORMATTER.format(rid)
-        title = title.replace('/','').replace('\\','').replace('?','').replace(' ','')
+        title = (
+            title
+            .replace('/','')
+            .replace('\\','')
+            .replace('?','')
+            .replace(' ','')
+            .replace(':','：')
+            .replace('*','x')
+            .replace('?','？')
+            .replace('"','”')
+            .replace('|','-')
+            .replace('<','《')
+            .replace('>','》')
+        )
         self._start_time = datetime.datetime.now()
         # UTC-TIME
         self._file_name_time = f"{str(self._start_time + datetime.timedelta(seconds = 3600*8))[:19]}.{str(int(self._start_time.microsecond//1000)).zfill(3)}"
