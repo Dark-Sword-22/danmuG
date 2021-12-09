@@ -222,38 +222,49 @@ class Worker:
             'plat': '1',
             'csrf': self.csrf_token,
         }
+        request_mode = 'sync'
         for _ in range(2):
             try:
-                # # 因为发现asyncio的post模块似乎用pyinstaller打包会遇到bug，G了
-
-                # async with session.post(api_url, data=payload, headers=headers, cookies=cookies) as resp:
-                #     if resp.status == 200:
-                #         res = await resp.text()
-                #         self.logger.debug(f"步骤3反馈 - {res}")
-                #         res = json.loads(res)
-                #         if check_success(res):
-                #             self.logger.debug(f"步骤3成功 - {bvid}:{cid}:{progress}:{msg} - dmid:{res.get('data',{}).get('dmid','dmid')}")
-                #             return True
-                #     self.logger.warning(f"步骤3状态码错误 - {resp.status}:{await resp.text()}")
-                # await asyncio.sleep(10)
-                rsession = requests.session()
-                if self.proxy:
-                    rsession.proxies = self.proxy
-                rsession.mount('https://api.bilibili.com', HTTP20Adapter())
-                resp = rsession.post(api_url, data=payload, headers=headers, cookies=cookies)
-                if resp.status_code == 200:
-                    res = resp.text
-                    self.logger.debug(f"步骤3反馈 - {res}")
-                    res = json.loads(res)
-                    if check_success(res):
-                        self.logger.debug(f"步骤3成功 - {bvid}:{cid}:{progress}:{msg} - dmid:{res.get('data',{}).get('dmid','dmid')}")
-                        return True
-                self.logger.warning(f"步骤3状态码错误 - {resp.status_code}:{resp.text}")
-                if self.fail_count >= 3 and resp.status_code != 200:
-                    self.global_sleep_daemon.cancel()
-                    self.global_sleep_daemon = self.loop.create_task(self.work_work_sleep_sleep(avoid_first_work = True))
-                    self.logger.warning(f"多次被拦截触发强制睡眠")
-                await asyncio.sleep(10)
+                if request_mode == 'sync':
+                    rsession = requests.session()
+                    if self.proxy:
+                        rsession.proxies = self.proxy
+                    rsession.mount('https://api.bilibili.com', HTTP20Adapter())
+                    resp = rsession.post(api_url, data=payload, headers=headers, cookies=cookies)
+                    if resp.status_code == 200:
+                        res = resp.text
+                        self.logger.debug(f"步骤3反馈 - {res}")
+                        res = json.loads(res)
+                        if check_success(res):
+                            self.logger.debug(f"步骤3成功 - {bvid}:{cid}:{progress}:{msg} - dmid:{res.get('data',{}).get('dmid','dmid')}")
+                            return True
+                    self.logger.warning(f"步骤3状态码错误 - {resp.status_code}:{resp.text}")
+                    if self.fail_count >= 3 and resp.status_code != 200:
+                        self.global_sleep_daemon.cancel()
+                        self.global_sleep_daemon = self.loop.create_task(self.work_work_sleep_sleep(avoid_first_work = True))
+                        self.logger.warning(f"多次被拦截触发强制睡眠")
+                    await asyncio.sleep(10)
+                elif request_mode == 'async':
+                    # 因为发现asyncio的post模块似乎用pyinstaller打包会遇到bug，G了
+                    # 正常情况下这部分代码不会启用，如果需要使用代理的话就启用这部分代码
+                    _proxy = None
+                    if self.proxy:
+                        for k, v in self.proxy.items(): _proxy = f"{k}://{v}"
+                    async with session.post(api_url, data=payload, headers=headers, cookies=cookies, proxy=_proxy) as resp:
+                        if resp.status == 200:
+                            res = await resp.text()
+                            self.logger.debug(f"步骤3反馈 - {res}")
+                            res = json.loads(res)
+                            if check_success(res):
+                                self.logger.debug(f"步骤3成功 - {bvid}:{cid}:{progress}:{msg} - dmid:{res.get('data',{}).get('dmid','dmid')}")
+                                return True
+                        self.logger.warning(f"步骤3状态码错误 - {resp.status}:{await resp.text()}")
+                        if self.fail_count >= 3 and resp.status != 200:
+                            self.global_sleep_daemon.cancel()
+                            self.global_sleep_daemon = self.loop.create_task(self.work_work_sleep_sleep(avoid_first_work = True))
+                            self.logger.warning(f"多次被拦截触发强制睡眠")
+                    await asyncio.sleep(10)
+                else: raise # nope
             except:
                 raise 
                 ...
