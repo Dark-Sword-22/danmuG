@@ -8,7 +8,7 @@
 ### 我需要做什么
 目前还是很缺人手的，如果你想参与帮助重投，你需要遵循以下步骤：
 
-1. 下载release中的名为`dmclient.zip`的文件[（点击这里）](https://github.com/Dark-Sword-22/danmuG/releases)，它将本文件夹中的客户端脚本打包成一个完整的.exe可执行程序，使new ass们无需安装编程环境也能使用。当然，如果你是old ass，那么你也可以直接运行脚本。
+1. 下载release中的名为`dmclient.zip`的文件[（点击这里）](https://github.com/Dark-Sword-22/danmuG/releases)，它将本文件夹中的客户端脚本打包成一个完整的.exe可执行程序，使new ass们无需安装编程环境也能使用。当然，如果你是old ass，那么你也可以直接运行源码。
 2. 下载后解压，文件夹中的`dmclient.exe`是程序启动的入口，由于没有界面，所有配置通过修改`config.ini`的方式完成。
 3. 程序本身仅实现了将投递弹幕流程自动化的过程，也就是说不包括除此之外。在投稿前你仍然需要在普通浏览器中登录账号，并且记录下账号在B站的会话ID和反跨站保护令牌（SESSDATA和csrf token），并将其输入到`config.ini`的`sessid`和`csrf_token`的位置才能让程序正常以你的身份运行。对于完全不知道怎么获取的朋友请参考[这里](https://github.com/Dark-Sword-22/danmuG/blob/main/misc/%E5%A6%82%E4%BD%95%E8%8E%B7%E5%8F%96%E6%A8%A1%E6%8B%9F%E7%99%BB%E5%BD%95%E7%9A%84ID%E4%BF%A1%E6%81%AF.md)。
 4. 修改好信息后，正常工作时如下图。如果身份信息输入错误会提示读取失败并退出。
