@@ -154,7 +154,7 @@ class EpolledTailFile:
     def _listener_daemon(self):
         proc = subprocess.Popen(
             # f'ping {self.file_name}', 
-            f'tail -f {self.file_name}', 
+            f'tail -f -n 100 {self.file_name}', 
             stdin=subprocess.PIPE, 
             stdout=subprocess.PIPE, 
             shell=True,

@@ -186,10 +186,16 @@ class Fisherman:
         self._buffer_count = dict()
         self._buffer_last_refresh_time = time.time()
         self._block_set = {
+            ',',
+            '，',
+            '。',
             '.',
             '1',
             '2',
             '3',
+            '来了',
+            '偷播',
+            '播了',
             '欢迎来到直播间',
             '阻碍我的 豆浆烩面！',
             '宝，我能做你的掌中宝嘛~',
@@ -222,6 +228,7 @@ class Fisherman:
             '本子',
             '主播',
             '好烧',
+            '太烧',
             '骚',
             '倪哥',
             '尼哥',
@@ -238,7 +245,13 @@ class Fisherman:
             '节奏',
             'fuck',
             'FUCK',
-            '法克'
+            '法克',
+            '双飞',
+            '原味',
+            'pussy',
+            'PUSSY',
+            'TMD',
+            'tmd',
         )
         self._re_block_set = (
             re.compile("感谢.*大佬"),

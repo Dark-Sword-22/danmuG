@@ -104,7 +104,7 @@ async def get_archive_earliest(mode: Literal["auto", "specified"], bvid: Optiona
     '''
     一个投递流程分为三步， client 先获取任务，再确认要提交的任务，最后确认已经提交成功。
     其对应的后端 status 为 0,1,3
-    目前这个 handler 处理的是第一步，可以指定 BVID 或者选择自动获取最担心
+    目前这个 handler 处理的是第一步，可以指定 BVID 或者选择自动获取最新视频的弹幕
     '''
     async with async_session() as session:
         async with session.begin():

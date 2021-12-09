@@ -40,7 +40,7 @@
 
 ![sp03.png](https://github.com/Dark-Sword-22/danmuG/raw/main/misc/img/sp03.png)
 
-8. 下拉，可以看到在请求标头中有cookie这一项，它一般比较长。这就是大名鼎鼎的饼干（cookie），由`项目名=项目值; `这种形式的很多项字符串组成，它负责在你请求时记录你的身份信息。我们需要在其中寻找SESSDATA和bili_cjt这两项，如图中红框所示。
+8. 下拉，可以看到在请求标头中有cookie这一项，它一般比较长。这就是大名鼎鼎的饼干（cookie），由`项目名=项目值; `这种形式的很多项字符串组成，它负责在你请求时记录你的身份信息。我们需要在其中寻找`SESSDATA`和`bili_jct`这两项，如图中红框所示。
 
 ![sp04.png](https://github.com/Dark-Sword-22/danmuG/raw/main/misc/img/sp04.png)
 
