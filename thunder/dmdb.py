@@ -337,7 +337,7 @@ class DAL:
                 1 # 补位为0表示无任务
             ) 
         else:
-            stmt = select(table).where(table.status == 1).order_by(table.cmt_time).limit(44)
+            stmt = select(table).where(table.status == 1).order_by(table.cmt_time).limit(88)
             item_set = (await self.session.execute(stmt)).scalars().all()
             if len(item_set) > 10:
                 item = random.sample(item_set, 1)[0]
