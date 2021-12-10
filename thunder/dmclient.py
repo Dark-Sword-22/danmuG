@@ -389,8 +389,8 @@ class Worker:
                 self.fail_count += 1
             elif res == 1:
                 self.fail_count = 0
-            if self.fail_count >= 10:
-                self.logger.warning(f"连续失败10次投递，设置可能出现问题或SESSDATA过期，请检查相关设置，程序退出")
+            if self.fail_count >= 5:
+                self.logger.warning(f"连续失败5次投递，设置可能出现问题或SESSDATA过期，请检查相关设置，程序退出")
                 self.close = True
             await asyncio.sleep(1)
 
