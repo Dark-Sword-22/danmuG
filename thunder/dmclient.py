@@ -13,7 +13,7 @@ from hyper.contrib import HTTP20Adapter
 from dmutils import determine_if_cmt_public, ConfigParser
 from pipeit import *
 
-VERSION = '1.0.4'
+VERSION = '1.0.5'
 MIN_INTERVAL = 28
 
 class TaskFail(Exception):
@@ -39,6 +39,14 @@ class Worker:
         _msg = "配置文件载入正常" if _ else "配置文件载入失败，初始化配置文件"
         self.logger.info(_msg)
         self.logger.info(f"弹幕投稿器版本: {VERSION}")
+        _remote_version = self.remote_version()
+        if _remote_version == None:
+            input(f"远端版本号获取失败，程序可能出现某种错误")
+            sys.exit(1)
+        elif _remote_version == VERSION:
+            self.logger.info(f"侦测到当前客户端版本为最新")
+        else:
+            self.logger.warning(f"侦测到远程版本号为: {_remote_version} ，与本地不符，您可能需要进行更新")
         self.logger.info(f"当前协调服务器地址: {self.server_url}")
         self.logger.info(f"代理地址: {self.proxy}")
         self.logger.info(f"日志级别: {self.loglevel}")
@@ -65,6 +73,9 @@ class Worker:
                 assert 8 <= len(self.query_bvid) <= 16
             else:
                 self.logger.warning("视频编号提取失败，请检查输入链接，程序结束。")
+        if self.proxy != False:
+            input("由于Python打包bug，打包版本下无法使用代理，请参考使用说明中的代理部分直接调用源码，程序退出")
+            sys.exit(1)
 
 
     def init(self):
@@ -222,50 +233,38 @@ class Worker:
             'plat': '1',
             'csrf': self.csrf_token,
         }
-        request_mode = 'sync'
-        if self.proxy != False: request_mode = 'async'
         for _ in range(2):
             try:
-                if request_mode == 'sync':
-                    rsession = requests.session()
-                    if self.proxy:
-                        rsession.proxies = self.proxy
-                    rsession.mount('https://api.bilibili.com', HTTP20Adapter())
-                    resp = rsession.post(api_url, data=payload, headers=headers, cookies=cookies)
-                    if resp.status_code == 200:
-                        res = resp.text
-                        self.logger.debug(f"步骤3反馈 - {res}")
-                        res = json.loads(res)
-                        if check_success(res):
-                            self.logger.debug(f"步骤3成功 - {bvid}:{cid}:{progress}:{msg} - dmid:{res.get('data',{}).get('dmid','dmid')}")
-                            return True
-                    self.logger.warning(f"步骤3状态码错误 - {resp.status_code}:{resp.text}")
-                    if self.fail_count >= 3 and resp.status_code != 200:
-                        self.global_sleep_daemon.cancel()
-                        self.global_sleep_daemon = self.loop.create_task(self.work_work_sleep_sleep(avoid_first_work = True))
-                        self.logger.warning(f"多次被拦截触发强制睡眠")
-                    await asyncio.sleep(10)
-                elif request_mode == 'async':
-                    # 因为发现asyncio的post模块似乎用pyinstaller打包会遇到bug，G了
-                    # 正常情况下这部分代码不会启用，如果需要使用代理的话就启用这部分代码
-                    _proxy = None
-                    if self.proxy:
-                        for k, v in self.proxy.items(): _proxy = f"{k}://{v}"
-                    async with session.post(api_url, data=payload, headers=headers, cookies=cookies, proxy=_proxy) as resp:
-                        if resp.status == 200:
-                            res = await resp.text()
-                            self.logger.debug(f"步骤3反馈 - {res}")
-                            res = json.loads(res)
-                            if check_success(res):
-                                self.logger.debug(f"步骤3成功 - {bvid}:{cid}:{progress}:{msg} - dmid:{res.get('data',{}).get('dmid','dmid')}")
-                                return True
-                        self.logger.warning(f"步骤3状态码错误 - {resp.status}:{await resp.text()}")
-                        if self.fail_count >= 3 and resp.status != 200:
-                            self.global_sleep_daemon.cancel()
-                            self.global_sleep_daemon = self.loop.create_task(self.work_work_sleep_sleep(avoid_first_work = True))
-                            self.logger.warning(f"多次被拦截触发强制睡眠")
-                    await asyncio.sleep(10)
-                else: raise # nope
+                # # 因为发现asyncio的post模块似乎用pyinstaller打包会遇到bug，G了
+
+                # async with session.post(api_url, data=payload, headers=headers, cookies=cookies) as resp:
+                #     if resp.status == 200:
+                #         res = await resp.text()
+                #         self.logger.debug(f"步骤3反馈 - {res}")
+                #         res = json.loads(res)
+                #         if check_success(res):
+                #             self.logger.debug(f"步骤3成功 - {bvid}:{cid}:{progress}:{msg} - dmid:{res.get('data',{}).get('dmid','dmid')}")
+                #             return True
+                #     self.logger.warning(f"步骤3状态码错误 - {resp.status}:{await resp.text()}")
+                # await asyncio.sleep(10)
+                rsession = requests.session()
+                if self.proxy:
+                    rsession.proxies = self.proxy
+                rsession.mount('https://api.bilibili.com', HTTP20Adapter())
+                resp = rsession.post(api_url, data=payload, headers=headers, cookies=cookies)
+                if resp.status_code == 200:
+                    res = resp.text
+                    self.logger.debug(f"步骤3反馈 - {res}")
+                    res = json.loads(res)
+                    if check_success(res):
+                        self.logger.debug(f"步骤3成功 - {bvid}:{cid}:{progress}:{msg} - dmid:{res.get('data',{}).get('dmid','dmid')}")
+                        return True
+                self.logger.warning(f"步骤3状态码错误 - {resp.status_code}:{resp.text}")
+                if self.fail_count >= 3 and resp.status_code != 200:
+                    self.global_sleep_daemon.cancel()
+                    self.global_sleep_daemon = self.loop.create_task(self.work_work_sleep_sleep(avoid_first_work = True))
+                    self.logger.warning(f"多次被拦截触发强制睡眠")
+                await asyncio.sleep(10)
             except:
                 raise 
                 ...
@@ -406,6 +405,15 @@ class Worker:
             self.logger.info("如果有正在进行的投递流程则会等到本轮投递流程完成")
             self.close = True
 
+    def remote_version(self):
+        try:
+            text = requests.get('http://raw.githubusercontent.com/Dark-Sword-22/danmuG/main/thunder/dmclient.py').text
+            version = re.search('''VERSION = ('|")[\d]+\.[\d]+\.[\d]+('|")''', text).group()
+            version = re.search('[\d]+\.[\d]+\.[\d]+', version).group()
+            return version
+        except:
+            return None
+
     async def work_work_sleep_sleep(self, avoid_first_work = False):
         while True:
             for _ in range(1):
@@ -422,7 +430,6 @@ class Worker:
 
     async def run_start(self):
         self.loop = asyncio.get_running_loop()
-
         self.global_sleep_daemon = self.loop.create_task(self.work_work_sleep_sleep())
         self.loop.create_task(self.run_daemon())
         while not self.wait_closed.is_set():
