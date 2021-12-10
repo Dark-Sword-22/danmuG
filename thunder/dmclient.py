@@ -223,6 +223,7 @@ class Worker:
             'csrf': self.csrf_token,
         }
         request_mode = 'sync'
+        if self.proxy != False: request_mode = 'async'
         for _ in range(2):
             try:
                 if request_mode == 'sync':
