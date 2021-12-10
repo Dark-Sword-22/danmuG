@@ -206,24 +206,36 @@ pull_stack = []
 async def github_webhook_activated(req: Request, X_Hub_Signature_256: Optional[str] = Header(None, convert_underscores=True)):
     '''
     用于接受 github push 钩子事件。使 data 中的数据一直保持最新，并触发更新模块，数据库也会对应进行增删。
+    设置一个更新栈，因为数次积累更新实际只需要触发一次pull，所以排除掉积累的更新请求。栈中保存False则只会更新数据，True则同步刷新db
     '''
     payload = await req.body()
     res = hmac.compare_digest(hmac.new(webhook_secret.encode(), payload , digestmod = sha256).hexdigest(), X_Hub_Signature_256[7:])
     if res:
+        # 判断是否是bot更新，不接受bot更新后产生的推流.
+        try:
+            data = json.loads(payload.decode('utf-8'))
+            pass_flag = 'Render' in data["commits"][0]["message"]
+        except:
+            pass_flag = False
         default_logger.info(f"Update pool stack length: {len(pull_stack)}")
         if len(pull_stack) == 0:
-            pull_stack.append(None)
+            pull_stack.append(not pass_flag)
             while pull_stack:
+                refresh_db_flag = pull_stack.pop()
                 default_logger.info("Git push webhook trigered")
                 await git_pull(asyncio.get_running_loop())
                 default_logger.info("Git pulled")
-                await scan_and_reload(engine)
-                default_logger.info("Engine finish update")
-                pull_stack.pop()
+                if refresh_db_flag:
+                    await scan_and_reload(engine)
+                    default_logger.info("Engine finish update")
+                else:
+                    default_logger.info("Engine update passed")
         else:
+            has_refresh_db_flag = False
             while len(pull_stack) > 1:
-                pull_stack.pop()
-            pull_stack.push(None)
+                if pull_stack.pop():
+                    has_refresh_db_flag = True
+            pull_stack.push(has_refresh_db_flag or (not pass_flag))
         default_logger.debug(f"Send response, pool stack length: {len(pull_stack)}")
     return {'success': 0, 'data': {'assertion result': res}}
 

@@ -421,9 +421,11 @@ class Worker:
                     avoid_first_work = True
                     break
                 self.workflag = True
+                self.logger.info("全局计时器：切换为工作状态")
                 for _ in range(self.worktime):
                     await asyncio.sleep(3600)
             self.workflag = False 
+            self.logger.info(f"全局计时器：切换为休眠状态，将在{self.sleeptime}小时后唤醒")
             for _ in range(self.sleeptime):
                 await asyncio.sleep(3600)
 
