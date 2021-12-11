@@ -383,10 +383,10 @@ class DAL:
                 return -3
             else:
                 async with ClientSession() as http_session:
-                    for _ in range(2):
+                    for _ in range(3):
                         res = await determine_if_cmt_public(http_session, item.send_time, item.cid, item.content)
                         if res:break
-                        if _ == 0: await asyncio.sleep(3)
+                        if _ < 2: await asyncio.sleep(3)
                     else:
                         res = False
                     if res:
