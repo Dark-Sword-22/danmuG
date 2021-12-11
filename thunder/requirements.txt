@@ -8,3 +8,4 @@ aiofiles
 aiosqlite
 psutil
 ThreadPoolExecutorPlus
+hyper

@@ -21,7 +21,7 @@
   <body style="margin:0;padding:0">
     <div id="app" class="absolute w-full min-h-screen" style="background-color: #e0e5ec">
       <div class="absolute h-full w-full overflow-hidden flex flex-row-reverse">
-        <img class="absolute z-0" style="opacity:0.9" :src='img_url_choice' ref="iimg" @load="show_img_art_info"/>
+        <img class="absolute z-0" style="opacity:0.9" :src='img_url_choice' ref="iimg" @load="show_img_art_info" @click="tests"/>
       </div>
 
       <div class="absolute w-screen h-screen" style="pointer-events: none;">
@@ -129,7 +129,6 @@
     var app = new Vue({
       el: '#app',
       data: {
-        message: 'Hello Vue!',
         table_data: data,
         show_table: false,
         superman_data: superman,
@@ -138,9 +137,9 @@
         pos_y: 0,
         flag: true,
         img_urls: [
-          '/danmuG/qmm1.webp',
-          '/danmuG/qmm2.webp',
-          '/danmuG/qmm3.webp',
+          'qmm1.webp',
+          'qmm2.webp',
+          'qmm3.webp',
         ],
         artists: [
           'hinanawi_mika',
@@ -172,6 +171,9 @@
         }
       },
       methods: {
+        tests(){
+          console.log(123)
+        },
         show_img_art_info(){
           if (this.$refs.iimg.src.length > 0) {
             this.$refs.img_art_info.className = "z-100 w-full h-14 flex flex-row-reverse"
