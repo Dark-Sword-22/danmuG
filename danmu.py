@@ -213,6 +213,8 @@ class Fisherman:
             # 根据弹幕重投失败反馈的B站弹幕拦截关键字
             # 也许与用户等级低有关也说不定
             # 总之可以看得出阿B真的很敏感
+            'img',
+            'IMG',
             'cc',
             'CC',
             'cnm',
@@ -373,12 +375,12 @@ class Fisherman:
 
     async def git_push(self):
         self.logger.debug("Git push triggered")
-        return 
+        # return 
         def wraper():
             try:
                 os.system("git add -A")
-                os.system('git commit -m "弹幕更新"')
-                os.system("git push")
+                os.system(f'git commit -m "[{str(datetime.datetime.now() + datetime.timedelta(seconds = 8*3600))[:10]}] 弹幕更新"')
+                os.system("git push --force")
             except:
                 ...
         await self.loop.run_in_executor(None, wraper)
