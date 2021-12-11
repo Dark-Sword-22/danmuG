@@ -194,8 +194,6 @@ class Fisherman:
             '2',
             '3',
             '来了',
-            '偷播',
-            '播了',
             '欢迎来到直播间',
             '阻碍我的 豆浆烩面！',
             '宝，我能做你的掌中宝嘛~',
@@ -253,6 +251,7 @@ class Fisherman:
             'PUSSY',
             'TMD',
             'tmd',
+            '客户端',
         )
         self._re_block_set = (
             re.compile("感谢.*大佬"),
