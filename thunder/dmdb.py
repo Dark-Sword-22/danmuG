@@ -383,12 +383,17 @@ class DAL:
                 return -3
             else:
                 async with ClientSession() as http_session:
-                    for _ in range(3):
-                        res = await determine_if_cmt_public(http_session, item.send_time, item.cid, item.content)
-                        if res:break
-                        if _ < 2: await asyncio.sleep(3)
-                    else:
-                        res = False
+                    '''
+                    目前实际使用中出现约0.8%概率的客户端发送成功，服务器端获取不到的情况。会导致弹幕刷双份，体验一般。
+                    不知道产生原因，可能是cdn刷新导致，挂上更新延迟也没用。干脆停了看看效果吧
+                    '''
+                    # for _ in range(3):
+                    #     res = await determine_if_cmt_public(http_session, item.send_time, item.cid, item.content)
+                    #     if res:break
+                    #     if _ < 2: await asyncio.sleep(3)
+                    # else:
+                    #     res = False
+                    res = True
                     if res:
                         item.status = 3
                         # table finish?
