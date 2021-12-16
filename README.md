@@ -27,6 +27,8 @@
 2. 到[这个链接](https://github.com/Dark-Sword-22/danmuG/releases/latest)下载工具，并按照[操作说明](https://github.com/Dark-Sword-22/danmuG/tree/main/thunder)即可成为好哥哥。
 3. 目前工具已经打包，不需要投稿者自己提供任何运行环境。
 
+*- 另外招募一位协同管理，主要工作是更新新视频的对轴。并不花时间，但是需要关注秦川视频投稿动态，有意请发ISSUE -*
+
 ### Upd
 
 - 21.12.04 更新重投协调服务器。
