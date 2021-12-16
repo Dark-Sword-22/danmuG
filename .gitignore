@@ -141,3 +141,4 @@ thunder/log*
 slog*
 misc/pyinstaller_patch/pyinstaller_patch/
 dmclient/
+q2l/

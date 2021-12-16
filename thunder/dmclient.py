@@ -13,7 +13,7 @@ from hyper.contrib import HTTP20Adapter
 from dmutils import determine_if_cmt_public, ConfigParser
 from pipeit import *
 
-VERSION = '1.0.5'
+VERSION = '1.0.6'
 MIN_INTERVAL = 28
 
 class TaskFail(Exception):
@@ -277,14 +277,18 @@ class Worker:
         self.logger.debug("步骤1 - 获取")
         if self.working_mode == 'specified':
             assert isinstance(query_bvid, str) # 指定模式下必须输入bvid
-        async with session.get(f'{self.server_url}/api/quest-apply', params={'mode': self.working_mode, 'bvid': str(query_bvid)}) as resp:
-            if resp.status == 200:
-                res = json.loads(await resp.text())
-                if res.get('success') == 1:
-                    values = res.get('data').values()
-                    self.logger.debug(f"步骤1成功 - {values}")
-                    return values
-                self.logger.warning(f"步骤1失败 - {res.get('detail')}")
+        try:
+            async with session.get(f'{self.server_url}/api/quest-apply', params={'mode': self.working_mode, 'bvid': str(query_bvid)}) as resp:
+                if resp.status == 200:
+                    res = json.loads(await resp.text())
+                    if res.get('success') == 1:
+                        values = res.get('data').values()
+                        self.logger.debug(f"步骤1成功 - {values}")
+                        return values
+                    self.logger.warning(f"步骤1失败 - {res.get('detail')}")
+                return False
+        except Exception as e:
+            self.logger.warning(f"步骤1失败 - exp:{type(e)}:{str(e)}")
             return False
 
     async def quest_confirm(self, session, bvid, qid, token):

@@ -254,6 +254,11 @@ class Fisherman:
             'TMD',
             'tmd',
             '客户端',
+            '丑鱼',
+            '肥狗',
+            '翻墙',
+            '拉珠',
+            '内斗',
         )
         self._re_block_set = (
             re.compile("感谢.*大佬"),
