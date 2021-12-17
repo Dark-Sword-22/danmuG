@@ -259,6 +259,9 @@ class Fisherman:
             '翻墙',
             '拉珠',
             '内斗',
+            '[@]',
+            '欢迎捧场',
+            '欢迎入座',
         )
         self._re_block_set = (
             re.compile("感谢.*大佬"),
