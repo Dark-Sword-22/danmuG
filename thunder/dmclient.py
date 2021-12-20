@@ -13,7 +13,7 @@ from hyper.contrib import HTTP20Adapter
 from dmutils import determine_if_cmt_public, ConfigParser
 from pipeit import *
 
-VERSION = '1.0.6'
+VERSION = '1.0.7'
 MIN_INTERVAL = 28
 
 class TaskFail(Exception):
@@ -39,9 +39,11 @@ class Worker:
         _msg = "配置文件载入正常" if _ else "配置文件载入失败，初始化配置文件"
         self.logger.info(_msg)
         self.logger.info(f"弹幕投稿器版本: {VERSION}")
-        _remote_version = self.remote_version()
+        _remote_version, _error = self.remote_version()
         if _remote_version == None:
-            input(f"远端版本号获取失败，程序可能出现某种错误")
+            self.logger.warning("远端版本号获取失败，程序可能出现某种错误")
+            self.logger.warning(f"错误信息: {type(_error)}:{str(_error)}")
+            input("")
             sys.exit(1)
         elif _remote_version == VERSION:
             self.logger.info(f"侦测到当前客户端版本为最新")
@@ -293,26 +295,34 @@ class Worker:
 
     async def quest_confirm(self, session, bvid, qid, token):
         self.logger.debug("步骤2 - 确认")
-        async with session.get(f'{self.server_url}/api/quest-confirm', params={'bvid': bvid, 'qid': qid, 'token': token}) as resp:
-            if resp.status == 200:
-                res = json.loads(await resp.text())
-                if res.get('success') == 1:
-                    values = res.get('data').values()
-                    self.logger.debug(f"步骤2成功 - {values}")
-                    return True
-                self.logger.warning(f"步骤2失败 - {res.get('detail')}")
+        try:
+            async with session.get(f'{self.server_url}/api/quest-confirm', params={'bvid': bvid, 'qid': qid, 'token': token}) as resp:
+                if resp.status == 200:
+                    res = json.loads(await resp.text())
+                    if res.get('success') == 1:
+                        values = res.get('data').values()
+                        self.logger.debug(f"步骤2成功 - {values}")
+                        return True
+                    self.logger.warning(f"步骤2失败 - {res.get('detail')}")
+                return False
+        except Exception as e:
+            self.logger.warning(f"步骤2失败 - exp:{type(e)}:{str(e)}")
             return False
 
     async def declare_succeeded(self, session, bvid, qid, token):
         self.logger.debug("步骤5 - 回报")
-        async with session.get(f'{self.server_url}/api/quest-success', params={'bvid': bvid, 'qid': qid, 'token': token, 'wdcr': self.userid}) as resp:
-            if resp.status == 200:
-                res = json.loads(await resp.text())
-                if res.get('success') == 1:
-                    values = res.get('data').values()
-                    self.logger.debug(f"步骤5成功 - {values}")
-                    return True
-                self.logger.warning(f"步骤5失败 - {res.get('detail')}")
+        try:
+            async with session.get(f'{self.server_url}/api/quest-success', params={'bvid': bvid, 'qid': qid, 'token': token, 'wdcr': self.userid}) as resp:
+                if resp.status == 200:
+                    res = json.loads(await resp.text())
+                    if res.get('success') == 1:
+                        values = res.get('data').values()
+                        self.logger.debug(f"步骤5成功 - {values}")
+                        return True
+                    self.logger.warning(f"步骤5失败 - {res.get('detail')}")
+                return False
+        except Exception as e:
+            self.logger.warning(f"步骤5失败 - exp:{type(e)}:{str(e)}")
             return False
 
     async def standard_process(self):
@@ -411,12 +421,14 @@ class Worker:
 
     def remote_version(self):
         try:
-            text = requests.get('http://raw.githubusercontent.com/Dark-Sword-22/danmuG/main/thunder/dmclient.py').text
-            version = re.search('''VERSION = ('|")[\d]+\.[\d]+\.[\d]+('|")''', text).group()
-            version = re.search('[\d]+\.[\d]+\.[\d]+', version).group()
-            return version
-        except:
-            return None
+            text = requests.get('https://dog.464933.xyz/api/latest-client-version').text
+            version = json.loads(text)
+            assert version['success'] == True
+            assert isinstance(version['version'], str)
+            assert 5 <= len(version['version']) <= 11
+            return version, None
+        except Exception as e:
+            return None, e
 
     async def work_work_sleep_sleep(self, avoid_first_work = False):
         while True:

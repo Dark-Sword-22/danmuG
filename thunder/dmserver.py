@@ -4,6 +4,7 @@ import logging
 import uvicorn
 import orjson as json
 from hashlib import sha256
+from aiohttp import ClientSession
 from typing import Optional, Literal
 from fastapi import FastAPI, Request, Header, WebSocket, HTTPException, WebSocketDisconnect
 from fastapi.responses import ORJSONResponse, HTMLResponse
@@ -200,6 +201,28 @@ async def fetch_accomplishment_rate() -> dict:
                 lu_buffer_rate[current_time] = resp
     return resp
 
+vspat_1 = re.compile('''VERSION = ('|")[\d]+\.[\d]+\.[\d]+('|")''')
+vspat_2 = re.compile('[\d]+\.[\d]+\.[\d]+')
+lu_buffer_ver = {datetime.datetime(2002,2,22): ''}
+@app.get('/api/latest-client-version', response_class=ORJSONResponse)
+async def latest_client_version() -> dict:
+    last_update_time = tuple(lu_buffer_ver.keys())[0]
+    current_time = datetime.datetime.now()
+    if (current_time - last_update_time).total_seconds() < 600:
+        resp = lu_buffer_ver[last_update_time]
+    else:
+        try:
+            async with ClientSession() as session:
+                async with session.get('https://raw.githubusercontent.com/Dark-Sword-22/danmuG/main/thunder/dmclient.py') as query:
+                    assert query.status == 200
+                    script_raw = await query.text()
+                    remote_version = vspat_2.search(vspat_1.search(script_raw).group()).group()
+                    resp = {'success': True, 'version': remote_version}
+                    lu_buffer_ver.clear()
+                    lu_buffer_ver[current_time] = resp
+        except:
+            resp = {'success': False, 'version': None}  
+    return resp
 
 pull_stack = []
 @app.post("/github-webhook", response_class=ORJSONResponse)
