@@ -35,7 +35,7 @@ class BaseModel:
 
 Base = declarative_base(cls=BaseModel)
 GlobLock = asyncio.Lock()
-
+_MAXRETRY = 1
 
 class AbstractTable(Base):
     __abstract__ = True
@@ -257,7 +257,7 @@ async def clean_task_daemon(engine, msg_core):
                         if archives:
                             for item in archives:
                                 item.fail_count += 1
-                                if item.fail_count >= 2:
+                                if item.fail_count >= _MAXRETRY:
                                     item.status = 4
                                 else:
                                     item.status = 0
@@ -272,7 +272,7 @@ async def task_status_daemon(engine, table, qid):
         if item:
             if item.status < 3:
                 item.fail_count += 1
-                if item.fail_count >= 2:
+                if item.fail_count >= _MAXRETRY:
                     item.status = 4
                 else:
                     item.status = 0
@@ -342,7 +342,7 @@ class DAL:
             if len(item_set) > 10:
                 item = random.sample(item_set, 1)[0]
                 item.fail_count += 1
-                if item.fail_count >= 2:
+                if item.fail_count >= _MAXRETRY:
                     item.status = 4
                 else:
                     item.status = 0
@@ -350,7 +350,7 @@ class DAL:
                 # 确实没有任务了
                 for item in item_set:
                     item.status = 4
-                    item.fail_count = 2
+                    item.fail_count = _MAXRETRY
                 await self.session.execute(update(BVStatus).where(BVStatus.bvid == bvid).values(finished=True))
             await self.session.commit()
             return True
@@ -416,7 +416,7 @@ class DAL:
                     else:
                         item.fail_count = item.fail_count + 1
                         item.status = 0
-                        if item.fail_count >= 2:
+                        if item.fail_count >= _MAXRETRY:
                             item.status = 4
                         table_finish = await self.check_finished(table)
                         if table_finish:
