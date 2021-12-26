@@ -52,7 +52,7 @@ if not dev:
 
 
 sqlite_db = {'drivername': 'sqlite+aiosqlite', 'database': 'sqlite.db'}
-engine = create_async_engine(URL.create(**sqlite_db), echo=True, future=True, connect_args={"check_same_thread": False})
+engine = create_async_engine(URL.create(**sqlite_db), echo=False, future=True, connect_args={"check_same_thread": False})
 
 # 异常表
 error_codes = [
