@@ -1,5 +1,6 @@
 # danmuG
 [![Pages](https://github.com/Dark-Sword-22/danmuG/actions/workflows/python-pages.yml/badge.svg)](https://github.com/Dark-Sword-22/danmuG/actions/workflows/python-pages.yml)
+![Visits](https://visitor-badge.glitch.me/badge?page_id=darksword22.danmuG&left_color=red&right_color=green&left_text=Dark%20Sword)
 
 秦川弹幕机器人 
 
