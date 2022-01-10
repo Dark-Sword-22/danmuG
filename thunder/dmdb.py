@@ -437,7 +437,7 @@ class DAL:
             return False
 
     async def fetch_superman(self):
-        res = await self.session.execute(select(Contributors).order_by(Contributors.total_count.desc()).limit(10))
+        res = await self.session.execute(select(Contributors).order_by(Contributors.total_count.desc()).limit(50))
         res = res.scalars().all()
         return res | Map(lambda x: {"name": x.uname, "datetime": str(x.last_update_time + datetime.timedelta(seconds = 8*3600))[:19], "wordcount": x.total_chars}) | list
 
