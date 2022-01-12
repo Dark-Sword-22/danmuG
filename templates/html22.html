@@ -11,7 +11,7 @@
     } 
     </style> 
   <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
-  <link rel="icon" type="image/x-icon" href="/danmuG/favicon.ico"/>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico"/>
   <link rel="stylesheet" href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css">
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@5.8.55/css/materialdesignicons.min.css">
@@ -87,9 +87,9 @@
             per-page='10'
           >
             <b-table-column field="rank" label="排名" v-slot="props" centered>
-              <img src="/danmuG/img/medal_1.png" class="mr-1 ml-2" style="height:30px" v-if="props.row.rank===1"/>
-              <img src="/danmuG/img/medal_2.png" class="mr-1 ml-2" style="height:30px" v-if="props.row.rank===2"/>
-              <img src="/danmuG/img/medal_3.png" class="mr-1 ml-2" style="height:30px" v-if="props.row.rank===3"/>
+              <img src="/img/medal_1.png" class="mr-1 ml-2" style="height:30px" v-if="props.row.rank===1"/>
+              <img src="/img/medal_2.png" class="mr-1 ml-2" style="height:30px" v-if="props.row.rank===2"/>
+              <img src="/img/medal_3.png" class="mr-1 ml-2" style="height:30px" v-if="props.row.rank===3"/>
               <span class="text-gray-600 mr-2 ml-2 font-semibold" style="color:#e54367" v-if="props.row.rank>3"> {{ props.row.rank }} </span>
             </b-table-column>
             <b-table-column field="name" label="姓名" v-slot="props">
@@ -146,9 +146,9 @@
         pos_y: 0,
         flag: true,
         img_urls: [
-          '/danmuG/img/qmm1.webp',
-          '/danmuG/img/qmm2.webp',
-          '/danmuG/img/qmm3.webp',
+          '/img/qmm1.webp',
+          '/img/qmm2.webp',
+          '/img/qmm3.webp',
         ],
         artists: [
           'hinanawi_mika',

@@ -4,6 +4,7 @@
 
 秦川弹幕机器人 
 
+[https://dark-sword-22.pages.dev](https://dark-sword-22.pages.dev) (国内连通)
 [https://dark-sword-22.github.io](https://dark-sword-22.github.io)
 
 ## 功能说明
