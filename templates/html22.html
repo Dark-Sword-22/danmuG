@@ -96,7 +96,9 @@
               <span class="text-gray-600 lg:mr-8 md:mr-3"> {{ props.row.name }} </span>
             </b-table-column>
             <b-table-column field="wordcount" label="上传总字数" v-slot="props">
-              <span class="font-semibold text-gray-600 tracking-wider lg:mr-8 md:mr-3"> {{props.row.wordcount}} </span>
+              <span class="font-semibold text-gray-600 tracking-wider lg:mr-8 md:mr-3"
+              title="每上传1字可获得1摸鱼币，摸鱼币可兑换包括黑暗剑在内的奖品"
+              > {{props.row.wordcount}} </span>
             </b-table-column>
             <b-table-column field="datetime" label="最后活跃时间" centered v-slot="props">
               <span class="tag is-text  lg:ml-4 md:ml-1.5 lg:ml-4 md:ml-1.5"> {{ props.row.datetime }} </span>
