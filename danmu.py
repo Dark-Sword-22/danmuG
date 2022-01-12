@@ -16,7 +16,7 @@ from loguru import logger
 from pipeit import *
 
 
-VERSION = '0.3.3'
+VERSION = '0.3.4'
 SLEEP_INTERVAL = 5
 URL_FORMATTER = "https://cc.163.com/{0}/"
 
@@ -465,6 +465,7 @@ class Fisherman:
                 self.logger.info("接收到终止信号，写入线程退出")
                 self.ddos_reset()
                 self._long_cmt_unique_buff = deque()
+                await self.git_pull()
                 await self.git_push()
                 close_pushed.set_result(None)
                 return 

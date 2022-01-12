@@ -110,7 +110,6 @@ async def get_archive_earliest(mode: Literal["auto", "specified"], bvid: Optiona
     async with async_session() as session:
         async with session.begin():
             dal = DAL(engine, session, msg_core)
-            print("Git push webhook trigered")
             resp = await dal.get_archive_earliest(mode, str(bvid))
             if isinstance(resp, tuple):
                 return {'success': 1, 'data': dict(zip(('id', 'progress', 'cid', 'bvid', 'msg', 'token', 'bias'), resp))}
