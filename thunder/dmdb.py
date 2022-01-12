@@ -457,8 +457,9 @@ class DAL:
         res = {}
         for table_name in tables:
             model = Base.get_model_by_table_name(table_name)
-            stmt = select(func.count()).select_from(select(model).where(model.status>=3))
-            r = (await self.session.execute(stmt)).scalars().first()
-            if r:
-                res[table_name] = r
+            if model:
+                stmt = select(func.count()).select_from(select(model).where(model.status>=3))
+                r = (await self.session.execute(stmt)).scalars().first()
+                if r:
+                    res[table_name] = r
         return res
