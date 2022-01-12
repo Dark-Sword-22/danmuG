@@ -175,7 +175,7 @@ async def scan_and_reload(engine):
             | list 
         )
     files.sort(key = lambda x: datetime.datetime.strptime(x[6:6+23], '%Y-%m-%d-%H-%M-%S-%f'), reverse = True)
-    if len(files) > 22*2: files = files[:22*2]
+    if len(files) > 22: files = files[:22]
 
     files_legal = []
     for file_name in files:
