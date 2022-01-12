@@ -83,8 +83,15 @@
             :data="superman_data" 
             striped
             hoverable
+            paginated
             per-page='10'
           >
+            <b-table-column field="rank" label="排名" v-slot="props" centered>
+              <img src="/danmuG/img/medal_1.png" class="mr-1 ml-2" style="height:34px" v-if="props.row.rank===1"/>
+              <img src="/danmuG/img/medal_2.png" class="mr-1 ml-2" style="height:34px" v-if="props.row.rank===2"/>
+              <img src="/danmuG/img/medal_3.png" class="mr-1 ml-2" style="height:34px" v-if="props.row.rank===3"/>
+              <span class="text-gray-600 mr-2 ml-2 font-semibold" style="color:#e54367" v-if="props.row.rank>3"> {{ convert_ranking(props.row.rank) }} </span>
+            </b-table-column>
             <b-table-column field="name" label="姓名" v-slot="props">
               <span class="text-gray-600 lg:mr-8 md:mr-3"> {{ props.row.name }} </span>
             </b-table-column>
@@ -132,15 +139,14 @@
         message: 'Hello Vue!',
         table_data: data,
         show_table: false,
-        superman_data: superman,
         tag_src: "https://visitor-badge.glitch.me/badge?page_id=darksword22.danmuG&left_color=red&right_color=green&left_text=Dark%20Sword",
         pos_x: 0,
         pos_y: 0,
         flag: true,
         img_urls: [
-          '/danmuG/qmm1.webp',
-          '/danmuG/qmm2.webp',
-          '/danmuG/qmm3.webp',
+          '/danmuG/img/qmm1.webp',
+          '/danmuG/img/qmm2.webp',
+          '/danmuG/img/qmm3.webp',
         ],
         artists: [
           'hinanawi_mika',
@@ -155,6 +161,18 @@
         img_url_choice: "",
         artist_choice: "",
         pixivid_choice: "",
+      },
+      computed: {
+        superman_data() {
+          let res = []
+          let count = 1
+          for (item of superman) {
+            item["rank"] = count
+            count += 1
+            res.push(item)
+          }
+          return res
+        }
       },
       created() {
         let rnd = Math.random()
