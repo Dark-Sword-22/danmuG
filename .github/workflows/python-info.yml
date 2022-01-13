@@ -1,6 +1,6 @@
-# 手动刷新最新一期的nlp结果
+# 在线获取视频信息
 
-name: Refresh Latest
+name: Video INFO
 
 on:
   workflow_dispatch: 
