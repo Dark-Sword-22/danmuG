@@ -16,7 +16,7 @@ from loguru import logger
 from pipeit import *
 
 
-VERSION = '0.3.4'
+VERSION = '0.3.5'
 SLEEP_INTERVAL = 5
 URL_FORMATTER = "https://cc.163.com/{0}/"
 
@@ -281,16 +281,26 @@ class Fisherman:
             '出屎',
             '很屎',
             '太屎',
+            '粪',
+            '屎山',
             '批站',
             '司马脸',
             '蛤蟆',
-            '充气娃娃'
+            '充气娃娃',
+            '新姜',
+            '鸿儒',
+            '烧鸡',
+            '牛子',
+            '导管',
+            '戒色',
+            '跳蛋',
+            '假证',
         )
         self._re_block_set = (
             re.compile("感谢.*大佬"),
             re.compile("\[emts\][\s\S]*?\[/emts\]"),
             re.compile("\[img\][\s\S]*?\[/img\]"),
-            re.compile("<b>.+</b>"),
+            re.compile("<[bu]>.+</[bu]>"),
             re.compile(f"({'|'.join(self._biliibli_block_set)})")
         )
         self._string_filter = lambda x: x.replace('\r\n',' ').replace('\r',' ').replace('\n',' ').strip()
