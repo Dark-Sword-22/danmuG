@@ -13,7 +13,7 @@ from hyper.contrib import HTTP20Adapter
 from dmutils import determine_if_cmt_public, ConfigParser
 from pipeit import *
 
-VERSION = '1.0.7'
+VERSION = '1.0.8'
 MIN_INTERVAL = 28
 
 class TaskFail(Exception):
@@ -66,15 +66,19 @@ class Worker:
         self.wait_closed = asyncio.Event()
         self.loop = None
         if self.working_mode == 'specified':
-            self.logger.info("请输入你希望投稿的视频链接，按回车继续")
+            self.logger.info("请输入你希望投稿的视频链接（完整连接，不区分http和https），")
+            self.logger.info("之后按回车继续。")
             self.logger.info("| 请注意，由于协调服务器仅缓存近期数据，距今22天以前上传的视频地址可能无法工作 |")
             inp = input()
             inp = re.search('/BV[a-zA-Z0-9]+', inp)
             if inp:
                 self.query_bvid = inp.group()[1:]
                 assert 8 <= len(self.query_bvid) <= 16
+                self.logger.info(f"你输入的视频BV号为: {self.query_bvid}")
             else:
                 self.logger.warning("视频编号提取失败，请检查输入链接，程序结束。")
+        else:
+            self.query_bvid = None
         if self.proxy != False:
             input("由于Python打包bug，打包版本下无法使用代理，请参考使用说明中的代理部分直接调用源码，程序退出")
             sys.exit(1)
@@ -267,8 +271,8 @@ class Worker:
                     self.global_sleep_daemon = self.loop.create_task(self.work_work_sleep_sleep(avoid_first_work = True))
                     self.logger.warning(f"多次被拦截触发强制睡眠")
                 await asyncio.sleep(10)
-            except:
-                raise 
+            except Exception as e:
+                self.logger.warning(f"投送到B站服务器出现错误: {type(e)}:{str(e)}") 
                 ...
         else:
             self.logger.debug(f"步骤3失败")
@@ -332,8 +336,7 @@ class Worker:
         try:
             self.logger.info("开始一个新的标准投递流程")
             async with ClientSession() as session:
-                self.working_mode = 'auto'
-                res = await self.quest_apply(session)
+                res = await self.quest_apply(session, self.query_bvid)
                 if res == False:
                     raise TaskFail()
                 # else
@@ -426,7 +429,7 @@ class Worker:
             assert version['success'] == True
             assert isinstance(version['version'], str)
             assert 5 <= len(version['version']) <= 11
-            return version, None
+            return version['version'], None
         except Exception as e:
             return None, e
 
