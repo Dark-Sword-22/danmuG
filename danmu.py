@@ -16,7 +16,7 @@ from loguru import logger
 from pipeit import *
 
 
-VERSION = '0.3.5'
+VERSION = '0.3.6'
 SLEEP_INTERVAL = 5
 URL_FORMATTER = "https://cc.163.com/{0}/"
 
@@ -186,6 +186,9 @@ class Fisherman:
         self._buffer_count = dict()
         self._buffer_last_refresh_time = time.time()
         self._block_set = {
+            '\n',
+            '\r',
+            '\r\n',
             ',',
             '，',
             '。',
