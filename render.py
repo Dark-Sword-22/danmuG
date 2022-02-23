@@ -207,6 +207,7 @@ def main(mode):
                 last_status3 = tab[idx] >= avg3
 
         # nlp topic part
+        tag_res = []
         if len(ptao) > 1:
             last_he_time = datetime.datetime.strptime(ptao[0][0],'%H:%M:%S')
             show_text_list = [(last_he_time, ptao[0][2]),]
