@@ -44,6 +44,6 @@
 
 ![sp04.png](https://github.com/Dark-Sword-22/danmuG/raw/main/misc/img/sp04.png)
 
-9. 将他们（不包含末尾的空格和分号）依次填入config.ini文件的sessid和csrf_token处即可（理论上）使程序正常工作，如果你操作正确的话，sessid应该长为34位，csrftoken应该长为32位
+9. 将他们（不包含末尾的空格和分号）依次填入config.ini文件的sessid和csrf_token处即可（理论上）使程序正常工作，如果你操作正确的话，sessid应该长为34位，csrftoken应该长为32位。（2022.2.26更新:由于B站更新策略，原sessid储存经过编码被取消，在更新节点后重新登录的用户获取的sessid长度可能为28位，格式类似于`a1234567,1600000000,ac130*22`，如果遇到这种情况请勿惊慌，最新版本客户端已经做出适配。对于原有的旧登录状态也不需要做任何修改，程序仍然保持兼容。）
 
 以上

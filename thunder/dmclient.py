@@ -13,7 +13,7 @@ from hyper.contrib import HTTP20Adapter
 from dmutils import determine_if_cmt_public, ConfigParser
 from pipeit import *
 
-VERSION = '1.0.8'
+VERSION = '1.0.9'
 MIN_INTERVAL = 28
 
 class TaskFail(Exception):
@@ -98,9 +98,18 @@ class Worker:
             normal_init_flag = False
             sessid, csrf_token = '', ''
 
-        if len(sessid) != 34 or len(csrf_token) != 32: # 如果出现错误代表获取到的数据不合法 
-            input("身份信息校验失败，按任意键退出")
-            sys.exit(1)
+        def check_failed():
+            input("身份信息校验失败，按任意键退出"); sys.exit(1)
+
+        if not (28 <= len(sessid) <= 34) or len(csrf_token) != 32: # 如果出现错误代表获取到的数据不合法 
+            check_failed()
+        else:
+            pat = re.match('[a-zA-Z0-9]{6,12}(%2C|,)[\d]{10,12}(%2C|,)[A-Za-z0-9\*]{6,12}', sessid)
+            if pat == None:
+                check_failed()
+            if ',' in sessid:
+                sessid = sessid.replace(',', '%2C')
+                
         try:
             conf.read(cfg_path)
             secrets = conf.items('secrets')
