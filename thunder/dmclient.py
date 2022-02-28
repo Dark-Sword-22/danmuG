@@ -104,12 +104,12 @@ class Worker:
         if not (28 <= len(sessid) <= 34) or len(csrf_token) != 32: # 如果出现错误代表获取到的数据不合法 
             check_failed()
         else:
-            pat = re.match('[a-zA-Z0-9]{6,12}(%2C|,)[\d]{10,12}(%2C|,)[A-Za-z0-9%\*]{6,12}', sessid)
+            pat = re.match('[a-zA-Z0-9]{6,12}(%2C|,)[\d]{10,12}(%2C|,)[A-Za-z0-9\*]{6,12}', sessid)
             if pat == None:
                 check_failed()
             if ',' in sessid:
                 sessid = sessid.replace(',', '%2C')
-                
+
         try:
             conf.read(cfg_path)
             secrets = conf.items('secrets')
