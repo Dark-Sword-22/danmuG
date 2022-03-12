@@ -13,7 +13,7 @@ from hyper.contrib import HTTP20Adapter
 from dmutils import determine_if_cmt_public, ConfigParser
 from pipeit import *
 
-VERSION = '1.0.9'
+VERSION = '1.0.10'
 MIN_INTERVAL = 28
 
 class TaskFail(Exception):
