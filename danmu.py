@@ -305,7 +305,10 @@ class Fisherman:
             'kale',
             '卡了',
             '不卡',
-            '卡卡'
+            '卡卡',
+            '卡死',
+            '卡爆',
+            '好卡',
         )
         self._re_block_set = (
             re.compile("感谢.*大佬"),
