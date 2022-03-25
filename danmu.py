@@ -16,7 +16,7 @@ from loguru import logger
 from pipeit import *
 
 
-VERSION = '0.3.6'
+VERSION = '0.3.7'
 SLEEP_INTERVAL = 5
 URL_FORMATTER = "https://cc.163.com/{0}/"
 
@@ -196,6 +196,9 @@ class Fisherman:
             '1',
             '2',
             '3',
+            '4',
+            '5',
+            '7',
             '来了',
             '哈人',
             '口区',
@@ -298,6 +301,11 @@ class Fisherman:
             '戒色',
             '跳蛋',
             '假证',
+            'KALE',
+            'kale',
+            '卡了',
+            '不卡',
+            '卡卡'
         )
         self._re_block_set = (
             re.compile("感谢.*大佬"),
@@ -472,7 +480,7 @@ class Fisherman:
                     cmt = self.ddos_protect(cmt)
                     if cmt:
                         cmt = self._string_filter(cmt)
-                        if '\n' not in cmt:
+                        if ('\n' not in cmt) and (cmt != ''):
                             writer.update(cmt)
             elif m['msg_type'] == 'close':
                 self.logger.info("接收到终止信号，写入线程退出")
