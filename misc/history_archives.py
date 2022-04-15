@@ -42,7 +42,7 @@ def main():
     if len(files) > 22: files = files[22:]
     files_name_map = dict(zip(files | Map(lambda x:x[:29]), files))
     files_set = set(files | Map(lambda x:x[:29]))
-    for files in os.walk('.'):
+    for files in os.walk(os.path.abspath('../archives/')):
         archives_set = (files[2]
             | Filter(lambda x:x[:5] == 'danmu' and os.path.splitext(x)[1] == '.gz') 
             | Map(lambda x:x[:29])
