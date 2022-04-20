@@ -208,6 +208,24 @@
       },
       methods: {
         refresh_page(){
+          if (this.flag) {
+            this.flag = false
+            let _buf = this.tag_src
+            let ele1 = this.$refs.plus1s
+            let ele22 = this.$refs.plus22s
+            if (this.pos_x === 0 || this.pos_y === 0) {
+              ele1.style.top = ele22.offsetTop-10 + 'px';
+              ele1.style.left = ele22.offsetLeft+30 + 'px';
+            } else {
+              ele1.style.top = this.pos_y -15 + 'px'
+              ele1.style.left = this.pos_x+ 'px'
+            }
+            ele1.style.display = 'block'
+            ele1.classList.add("animate__fadeOutUp")
+            this.tag_src = ''
+            setTimeout(() => {this.tag_src = _buf}, 50)
+            setTimeout(() => {this.flag = true;ele1.style.display = 'none';ele1.classList.remove("animate__fadeOutUp")}, 300)
+          }
           location.reload();
         },
         show_img_art_info(){
@@ -232,7 +250,8 @@
             ele1.classList.add("animate__fadeOutUp")
             this.tag_src = ''
             setTimeout(() => {this.tag_src = _buf}, 50)
-            setTimeout(() => {this.flag = true;ele1.style.display = 'none';ele1.classList.remove("animate__fadeOutUp");window.location.href="https://github.com/Dark-Sword-22/danmuG#我们做了什么"}, 300)
+            setTimeout(() => {this.flag = true;ele1.style.display = 'none';ele1.classList.remove("animate__fadeOutUp")}, 300)
+            setTimeout(() => {window.location.href="https://github.com/Dark-Sword-22/danmuG#我们做了什么"}, 300)
           }
         },
         columnTdAttrs(row, column) {
