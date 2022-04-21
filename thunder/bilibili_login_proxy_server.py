@@ -19,30 +19,23 @@ from slowapi import RateLimiter
 file_dir = os.path.dirname(os.path.realpath(__file__))
 cfg_path = os.path.join(file_dir, "server_config.ini")
 conf = ConfigParser()
-# conf.read(cfg_path)
-# secrets = conf.items('secrets')
-# trust_list = json.loads(secrets['trust_list'].encode())
-# dev = json.loads(secrets['dev'].encode())
-dev = True;trust_list = []
-
-
-executor = [None, ]
+conf.read(cfg_path)
+secrets = conf.items('secrets')
+trust_list = json.loads(secrets['trust_list'].encode())
+dev = json.loads(secrets['dev'].encode())
+host = json.loads(secrets['host'].encode())
+port = json.loads(secrets['port2'].encode())
+cors_list = json.loads(secrets['trust_list'].encode())
 
 app = FastAPI(docs_url='/docs' if dev else None, redoc_url=None)
-origins = [
-    "*",
-    "http://localhost.tiangolo.com",
-    "https://localhost.tiangolo.com",
-    "http://localhost",
-    "http://localhost:8080",
-]
+
 if not dev: 
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=trust_list)
     app.add_middleware(GZipMiddleware, minimum_size=1024)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=cors_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -83,12 +76,10 @@ async def pre_captcha(dynamic_string: str):
         captcha_id, create_time, orn_captcha, captcha_base64 = await loop.run_in_executor(_executor, render_new_catpcha) # 3ms
         orn_captcha = captcha_str_filter(orn_captcha)
         captcha_dict[captcha_id] = (orn_captcha, create_time)
-        print(captcha_dict)
         return {'success': 1, "data": {'key': captcha_id, 'image': captcha_base64, 'msg': ''}}
     except Exception as e:
         return {'success': 0, "data": {'msg': f"{type(e)}: {str(e)}"}}
 
-from loguru import logger
 @app.websocket('/ws/bilibili-login')
 async def ws_log_danmug(websocket: WebSocket, captcha_id: str = '', user_string: str = ''):
     orn_captcha = captcha_dict.get(captcha_id, [None, ])[0]
@@ -109,7 +100,6 @@ async def ws_log_danmug(websocket: WebSocket, captcha_id: str = '', user_string:
         if back_content is None:
             await websocket.send_json({'success': 0, "data": {'msg': "向B站发送的请求失败了-1 (・ˍ・*)"}});return
         try:
-            logger.info(back_content)
             back_content = json.loads(back_content)
             if back_content['code'] != 0:
                 await websocket.send_json({'success': 0, "data": {'msg': "向B站发送的请求失败了-2 (・ˍ・*)"}});return
@@ -124,7 +114,7 @@ async def ws_log_danmug(websocket: WebSocket, captcha_id: str = '', user_string:
         st_call_time = time.time()
         payload = {'oauthKey': oauthKey}
         while True:
-            await asyncio.sleep(2)
+            await asyncio.sleep(4)
             cur_time = time.time()
             if (cur_time - st_call_time) > 175:
                 await websocket.send_json({'success': 0, "data": {'msg': "二维码过期"}}); return
@@ -142,7 +132,6 @@ async def ws_log_danmug(websocket: WebSocket, captcha_id: str = '', user_string:
                     # else 
                     await websocket.send_json({'success': 0, "data": {'msg': "heart beat"}})
             except Exception as e:
-                raise e
                 await websocket.send_json({'success': 0, "data": {'msg': f"{type(e)}: {str(e)}"}}); return
 
 
@@ -161,7 +150,7 @@ if __name__ == '__main__':
     with ThreadPoolExecutor(max_workers=16) as ex:
         ex.set_daemon_opts(min_workers=5)
         executor[0] = ex
-    uvicorn.run("bilibili_login_proxy_server:app", port=8080, host='0.0.0.0', log_config=log_config, reload=dev) 
+    uvicorn.run("bilibili_login_proxy_server:app", port=port2, host='0.0.0.0', log_config=log_config, reload=dev) 
 
 
 
