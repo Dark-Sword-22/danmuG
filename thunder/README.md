@@ -17,6 +17,7 @@
 ![pg01.png](https://github.com/Dark-Sword-22/danmuG/raw/main/misc/img/pg01.png)
 
 ### 一些更具体的配置项说明
+![image](https://user-images.githubusercontent.com/58373760/164360580-5f09e167-66cd-4d0e-9ac0-01c42cabc084.png)
 
 配置项本身仅有几项，也没什么好配置的，大概说一下各自的作用。
 - `sessid`和`csrf_id`分别代表会话身份信息和放跨站保护令牌，这个没什么好说的。
