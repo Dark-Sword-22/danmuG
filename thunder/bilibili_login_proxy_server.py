@@ -151,7 +151,7 @@ if __name__ == '__main__':
     with ThreadPoolExecutor(max_workers=16) as ex:
         ex.set_daemon_opts(min_workers=5)
         executor[0] = ex
-    uvicorn.run("bilibili_login_proxy_server:app", port=port2, host='0.0.0.0', log_config=log_config, reload=dev) 
+    uvicorn.run("bilibili_login_proxy_server:app", port=port, host='0.0.0.0', log_config=log_config, reload=dev) 
 
 
 
