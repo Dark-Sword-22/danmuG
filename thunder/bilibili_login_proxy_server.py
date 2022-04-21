@@ -35,7 +35,7 @@ if not dev:
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=['*',],
+    allow_origins=cors_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -148,14 +148,6 @@ async def ws_log_danmug(websocket: WebSocket, captcha_id: str = '', user_string:
                     return
 
 
-
-    
-    
-    
-
-
-
-
 if __name__ == '__main__':
     log_config = uvicorn.config.LOGGING_CONFIG
     log_config["formatters"]["default"]["fmt"] = "[%(asctime)s] | %(levelname)s | %(message)s"
@@ -163,7 +155,4 @@ if __name__ == '__main__':
     with ThreadPoolExecutor(max_workers=16) as ex:
         ex.set_daemon_opts(min_workers=5)
         executor[0] = ex
-    uvicorn.run("bilibili_login_proxy_server:app", port=port, host='0.0.0.0', log_config=log_config, reload=dev) 
-
-
-
+    uvicorn.run("bilibili_login_proxy_server:app", port=port, host=host, log_config=log_config, reload=dev) 

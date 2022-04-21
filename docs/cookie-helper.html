@@ -239,8 +239,8 @@
             }
             ws.onclose = () =>{
               if (that.success != true) {
-                that.dialog_error('?', '摸之摸摸，重新试试？', 'is-warning')
-                setTimeout(() => {location.reload();}, 3000)
+                that.dialog_error('失败', '摸之摸摸，重新试试？(好哥哥更新：如果你看起来很正确的码反复试了就是不对，那有可能是因为某些运营商阻断了长连接协议（因该协议常用来支持科学上网），这就比较尴尬了，开发时用了比较高端的长连接协议，但没考虑到阻断的问题，发现问题又懒得改代码，解决方案也许是换网)', 'is-warning')
+                setTimeout(() => {location.reload();}, 6000)
               }
             }
           }
