@@ -234,4 +234,12 @@ def render_new_catpcha() -> (str, float, str, str):
     return captcha_id, time.time(), orn_captcha, captcha_base64
 
 def captcha_str_filter(_):
-    return _.replace('b','6').replace('q','9').lower().replace('i','1').replace('l','1').replace('o','0')
+    return (_
+        .replace('G','6')
+        .replace('l',1)
+        .replace('D',0)
+        .replace('S',5)
+        .replace('q','9')
+        .lower()
+        .replace('o','0')
+    )
