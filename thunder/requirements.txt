@@ -9,3 +9,4 @@ aiosqlite
 psutil
 ThreadPoolExecutorPlus
 hyper
+captcha

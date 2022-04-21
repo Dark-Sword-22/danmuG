@@ -42,6 +42,7 @@ app.add_middleware(
 )
 
 captcha_dict = {}
+executor = [None, ]
 b_headers = {
     'accept': 'application/json, text/plain, */*',
     'accept-encoding': 'gzip, deflate',
