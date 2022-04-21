@@ -35,7 +35,7 @@ if not dev:
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=cors_list,
+    allow_origins=['*',],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -88,7 +88,10 @@ async def ws_log_danmug(websocket: WebSocket, captcha_id: str = '', user_string:
         return HTTPException(status_code=403, detail="403 Forbidden")
     del captcha_dict[captcha_id] # 释放占用
 
-    await websocket.accept()
+    try:
+        await websocket.accept()
+    except:
+        return
 
     b_headers_cp = b_headers.copy()
     b_headers_cp['referer'] = b_headers_cp['referer'].format(random.randint(300,400), random.randint(100,999))
@@ -111,14 +114,20 @@ async def ws_log_danmug(websocket: WebSocket, captcha_id: str = '', user_string:
         except Exception as e:
             await websocket.send_json({'success': 0, "data": {'msg': f"{type(e)}: {str(e)}"}}); return
 
-        await websocket.send_json({'success': 1, "data": {'msg': "url", "url": passport_url}})
+        try:
+            await websocket.send_json({'success': 1, "data": {'msg': "url", "url": passport_url}})
+        except:
+            return
         st_call_time = time.time()
         payload = {'oauthKey': oauthKey}
         while True:
             await asyncio.sleep(4)
             cur_time = time.time()
             if (cur_time - st_call_time) > 175:
-                await websocket.send_json({'success': 0, "data": {'msg': "二维码过期"}}); return
+                try:
+                    await websocket.send_json({'success': 0, "data": {'msg': "二维码过期"}}); return
+                except:
+                    return
             try:
                 async with session.post('http://passport.bilibili.com/qrcode/getLoginInfo', headers = b_headers_cp, data = payload) as resp:
                     if resp.status != 200:
@@ -133,7 +142,10 @@ async def ws_log_danmug(websocket: WebSocket, captcha_id: str = '', user_string:
                     # else 
                     await websocket.send_json({'success': 0, "data": {'msg': "heart beat"}})
             except Exception as e:
-                await websocket.send_json({'success': 0, "data": {'msg': f"{type(e)}: {str(e)}"}}); return
+                try:
+                    await websocket.send_json({'success': 0, "data": {'msg': f"{type(e)}: {str(e)}"}}); return
+                except:
+                    return
 
 
 
