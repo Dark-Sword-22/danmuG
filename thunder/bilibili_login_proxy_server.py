@@ -25,7 +25,7 @@ trust_list = json.loads(secrets['trust_list'].encode())
 dev = json.loads(secrets['dev'].encode())
 host = json.loads(secrets['host'].encode())
 port = json.loads(secrets['port2'].encode())
-cors_list = json.loads(secrets['trust_list'].encode())
+cors_list = json.loads(secrets['cors_list'].encode())
 
 app = FastAPI(docs_url='/docs' if dev else None, redoc_url=None)
 
