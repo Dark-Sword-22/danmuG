@@ -445,11 +445,14 @@ class DAL:
 
     async def check_finished(self, table):
 
-        stmt = select(table).where(table.status < 3).limit(1)
-        unfinished_items = (await self.session.execute(stmt)).scalars().all()
-        if not unfinished_items:
-            return True
-        else:
+        try:
+            stmt = select(table).where(table.status < 3).limit(1)
+            unfinished_items = (await self.session.execute(stmt)).scalars().all()
+            if not unfinished_items:
+                return True
+            else:
+                return False
+        except:
             return False
 
     async def fetch_superman(self):
