@@ -66,7 +66,7 @@ async def startup():
 
 
 @app.get("/bilibili-login", response_class=ORJSONResponse)
-@RateLimiter(20, 10)
+@RateLimiter(20, 3)
 async def pre_captcha(dynamic_string: str):
     if len(dynamic_string) != 8 or len(captcha_dict) > 100:
         return HTTPException(status_code=422, detail="403 Forbidden")
