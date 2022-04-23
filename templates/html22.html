@@ -20,7 +20,7 @@
   </head>
   <body style="margin:0;padding:0">
     <div id="app" class="absolute w-full min-h-screen" style="background-color: #e0e5ec">
-      <div class="absolute h-full w-full overflow-hidden flex flex-row-reverse">
+      <div class="absolute h-full w-full overflow-hidden flex flex-row-reverse select-none">
         <img class="absolute z-0" style="opacity:0.9" :src='img_url_choice' ref="iimg" @load="show_img_art_info" @click="refresh_page" />
       </div>
 
@@ -87,9 +87,9 @@
             per-page='10'
           >
             <b-table-column field="rank" label="排名" v-slot="props" centered>
-              <img src="/img/medal_1.png" class="mr-1 ml-2" style="height:30px" v-if="props.row.rank===1"/>
-              <img src="/img/medal_2.png" class="mr-1 ml-2" style="height:30px" v-if="props.row.rank===2"/>
-              <img src="/img/medal_3.png" class="mr-1 ml-2" style="height:30px" v-if="props.row.rank===3"/>
+              <img src="/img/medal_1.png" class="mr-1 ml-2 select-none" style="height:30px" v-if="props.row.rank===1"/>
+              <img src="/img/medal_2.png" class="mr-1 ml-2 select-none" style="height:30px" v-if="props.row.rank===2"/>
+              <img src="/img/medal_3.png" class="mr-1 ml-2 select-none" style="height:30px" v-if="props.row.rank===3"/>
               <span class="text-gray-600 mr-2 ml-2 font-semibold" style="color:#e54367" v-if="props.row.rank>3"> {{ props.row.rank }} </span>
             </b-table-column>
             <b-table-column field="name" label="姓名" v-slot="props">
