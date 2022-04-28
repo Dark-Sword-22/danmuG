@@ -16,7 +16,7 @@ from loguru import logger
 from pipeit import *
 
 
-VERSION = '0.4.0'
+VERSION = '0.4.1'
 SLEEP_INTERVAL = 5
 URL_FORMATTER = "https://cc.163.com/{0}/"
 
@@ -539,6 +539,7 @@ class Fisherman:
             '智商',
             '佟大为',
             '智障',
+            '\u200b\u200b',
         )
         self._re_block_set = (
             re.compile("感谢.*大佬"),
