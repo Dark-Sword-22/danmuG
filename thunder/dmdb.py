@@ -257,7 +257,7 @@ async def clean_task_daemon(engine, msg_core):
                     for cid, cid_count in count_lines:
                         diff_num = cid_count - 4800
                         if diff_num > 0:
-                            devalues = (await session.execute(select(table).where(table.status==0).where(func.length(table.content) <= 7).order_by(func.random()).limit(diff_num))).scalars().all()
+                            devalues = (await session.execute(select(table).where(table.status==0).where(func.length(table.content) <= 6).order_by(func.random()).limit(diff_num))).scalars().all()
                             for item in devalues:
                                 item.fail_count = 4
                                 item.status = 3
