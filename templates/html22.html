@@ -21,7 +21,7 @@
   <body style="margin:0;padding:0">
     <div id="app" class="absolute w-full min-h-screen" style="background-color: #e0e5ec">
       <div class="absolute h-full w-full overflow-hidden flex flex-row-reverse select-none">
-        <img class="absolute z-0" style="opacity:0.9" :src='img_url_choice' ref="iimg" @load="show_img_art_info" @click="refresh_page" />
+        <img class="absolute z-0" style="opacity:0.9" :src='choice_with_location' ref="iimg" @load="show_img_art_info" @click="refresh_page" />
       </div>
 
       <div class="absolute w-screen h-screen" style="pointer-events: none;">
@@ -146,45 +146,45 @@
         pos_y: 0,
         flag: true,
         img_urls: [
-          // '/img/qmm1.webp',
-          // '/img/qmm2.webp',
-          // '/img/qmm3.webp',
-          // '/img/qmm4.webp',
-          // '/img/qmm5.webp',
-          // '/img/qmm6.webp',
-          // '/img/qmm7.webp',
-          // '/img/qmm8.webp',
+          '/img/qmm1.webp',
+          '/img/qmm2.webp',
+          '/img/qmm3.webp',
+          '/img/qmm4.webp',
+          '/img/qmm5.webp',
+          '/img/qmm6.webp',
+          '/img/qmm7.webp',
+          '/img/qmm8.webp',
           '/img/qmm9.webp',
-          // '/img/qmm10.webp',
-          // '/img/qmm11.webp',
+          '/img/qmm10.webp',
+          '/img/qmm11.webp',
           '/img/qmm12.webp',
         ],
         artists: [
-          // 'hinanawi_mika',
-          // '打倒nee',
-          // 'lolipantherwww',
-          // 'oYo98',
-          // '废物④号',
-          // '呵呜阿花',
-          // 'lolipantherwww',
-          // 'lolipantherwww',
+          'hinanawi_mika',
           '打倒nee',
-          // '显像管coffee',
-          // 'StellaNfleureT',
+          'lolipantherwww',
+          'oYo98',
+          '废物④号',
+          '呵呜阿花',
+          'lolipantherwww',
+          'lolipantherwww',
+          '打倒nee',
+          '显像管coffee',
+          'StellaNfleureT',
           '打倒nee',
         ],
         pixivid: [
-          // '19302213',
-          // '18710305',
-          // '6793858',
-          // '4699762',
-          // '5223920',
-          // '17192269',
-          // '96331035',
-          // '96331035',
+          '19302213',
           '18710305',
-          // '32158736',
-          // '18151476',
+          '6793858',
+          '4699762',
+          '5223920',
+          '17192269',
+          '96331035',
+          '96331035',
+          '18710305',
+          '32158736',
+          '18151476',
           '18710305',
         ],
         img_url_choice: "",
@@ -201,6 +201,9 @@
             res.push(item)
           }
           return res
+        },
+        choice_with_location(){
+          return document.location.href + this.img_url_choice
         }
       },
       created() {
