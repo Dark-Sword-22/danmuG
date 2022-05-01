@@ -13,8 +13,9 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from dmutils import ConfigParser
 from ThreadPoolExecutorPlus import ThreadPoolExecutor
-from dmutils import captcha_cleaner, render_new_catpcha, captcha_str_filter, ws_coro_heartbeat
+from dmutils import captcha_cleaner, captcha_str_filter, ws_coro_heartbeat
 from slowapi import RateLimiter
+from captcha.image import ImageCaptcha
 
 file_dir = os.path.dirname(os.path.realpath(__file__))
 cfg_path = os.path.join(file_dir, "server_config.ini")
@@ -64,6 +65,17 @@ async def startup():
     RateLimiter().porter_run_serve()
     asyncio.create_task(captcha_cleaner(captcha_dict))
 
+
+captcha_charset = [chr(i) for i in range(65, 91)]
+captcha_charset.extend([chr(i) for i in range(97, 123)])
+captcha_charset.extend([chr(i) for i in range(48, 58)])
+image = ImageCaptcha()
+
+def render_new_catpcha() -> (str, float, str, str):
+    captcha_id = str(uuid.uuid4())
+    orn_captcha = ''.join(random.sample(captcha_charset, 5))
+    captcha_base64 = 'data:image/png;base64,' + base64.b64encode(image.generate(orn_captcha).read()).decode('utf-8')
+    return captcha_id, time.time(), orn_captcha, captcha_base64
 
 @app.get("/bilibili-login", response_class=ORJSONResponse)
 @RateLimiter(20, 3)

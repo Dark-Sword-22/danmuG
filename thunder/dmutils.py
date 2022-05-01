@@ -15,7 +15,7 @@ from selectors import DefaultSelector, EVENT_READ, EVENT_WRITE
 from collections import deque
 from functools import partial
 from ThreadPoolExecutorPlus import ThreadPoolExecutor
-from captcha.image import ImageCaptcha
+
 
 char_scaner = re.compile('[\u3002\uff1b\uff0c\uff1a\u201c\u201d\uff08\uff09\u3001\uff1f\u300a\u300b\u4E00-\u9FA5\x00-\x7f]+')
 
@@ -223,15 +223,6 @@ async def captcha_cleaner(captcha_dict):
             if now_time - create_time > 300:
                 del captcha_dict[key]
 
-captcha_charset = [chr(i) for i in range(65, 91)]
-captcha_charset.extend([chr(i) for i in range(97, 123)])
-captcha_charset.extend([chr(i) for i in range(48, 58)])
-image = ImageCaptcha()
-def render_new_catpcha() -> (str, float, str, str):
-    captcha_id = str(uuid.uuid4())
-    orn_captcha = ''.join(random.sample(captcha_charset, 5))
-    captcha_base64 = 'data:image/png;base64,' + base64.b64encode(image.generate(orn_captcha).read()).decode('utf-8')
-    return captcha_id, time.time(), orn_captcha, captcha_base64
 
 def captcha_str_filter(_):
     return (_.replace('G','6')
