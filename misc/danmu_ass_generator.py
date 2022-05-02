@@ -1,7 +1,9 @@
-import asyncio
-from asyncio import tasks
 import sys
 import os
+from pipeit import *
+import json
+import datetime
+from collections import deque
 try:
     from loguru import logger
     logger.remove()
@@ -9,10 +11,7 @@ try:
 except:
     from logging import Logger 
     logger = Logger(__name__)
-from pipeit import *
-import json
-import datetime
-from collections import deque
+
 
 
 VIDEO_HEIGHT = 1080 # px
@@ -61,18 +60,19 @@ class OrbitalLauncher:
 def main():
     if len(sys.argv) != 2:
         logger.error("使用方式不对，将txt文件拖入cmd文件生成ass！")
-        input(); exit()
+        input("按回车键退出"); exit()
     try:
-        file_path = os.path.abspath(sys.argv[1])
-        _, ext = os.path.splitext(file_path)[1]
-        assert ext == '.txt'
-        file_name = os.path.split(file_path)[1]
+        file_path = sys.argv[1]
+        if file_path[-4:] != '.txt':
+            file_path += '.txt'
+        file_path = os.path.abspath(file_path)
+        file_dir, file_name = os.path.split(file_path)
         assert file_name[:6] == 'danmu-'
-    except:
+    except Exception as e:
         logger.error("拖入的文件不是合法的txt文件")
+        input("按回车键退出"); exit()
 
-    file_path = r'C:\Users\WEN\Documents\TEMP\danmuG\data\danmu-2022-04-30-19-04-24-048-【Quin】完美的一天.txt'
-    file_dir, file_name = os.path.split(file_path)
+    
 
     # 载入配置
     file_name_pure = os.path.splitext(file_name)[0]
