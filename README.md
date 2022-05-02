@@ -38,6 +38,7 @@
 
 ### Upd
 
+- 22.05.02 更新弹幕[生成工具](https://github.com/Dark-Sword-22/danmuG/blob/main/misc/%E5%BC%B9%E5%B9%95%E7%94%9F%E6%88%90%E5%B7%A5%E5%85%B7%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E.md)。
 - 22.04.20 更新扫码获取cookie的[网址](https://dark-sword-22.pages.dev/cookie-helper.html)。
 - 22.04.20 更新秦喵喵 \* 5。
 - 22.04.15 弹幕姬更新到`0.4.0`，更新大量屏蔽词汇。
