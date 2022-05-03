@@ -73,9 +73,11 @@ async def startup():
     '''
     初始扫描服务器，结束时关闭连接池
     '''
-    await scan_and_reload(engine)
     loop = asyncio.get_running_loop()
-    loop.create_task(clean_task_daemon(engine, msg_core))
+    dal = DAL(engine, None, msg_core, default_logger, loop=loop)
+    await dal.scan_and_reload()
+    loop = asyncio.get_running_loop()
+    loop.create_task(dal.clean_task_daemon(msg_core))
 
 @app.on_event("shutdown")
 async def shutdown():
@@ -109,7 +111,7 @@ async def get_archive_earliest(mode: Literal["auto", "specified"], bvid: Optiona
     '''
     async with async_session() as session:
         async with session.begin():
-            dal = DAL(engine, session, msg_core)
+            dal = DAL(engine, session, msg_core, loop=asyncio.get_running_loop())
             resp = await dal.get_archive_earliest(mode, str(bvid))
             if isinstance(resp, tuple):
                 return {'success': 1, 'data': dict(zip(('id', 'progress', 'cid', 'bvid', 'msg', 'token', 'bias'), resp))}
@@ -128,7 +130,7 @@ async def client_confirm_quest(bvid: str, qid: int, token: str) -> dict:
     async_session = sessionmaker(engine, expire_on_commit=True, class_=AsyncSession)
     async with async_session() as session:
         async with session.begin():
-            dal = DAL(engine, session, msg_core)
+            dal = DAL(engine, session, msg_core, loop=asyncio.get_running_loop())
             resp = await dal.client_confirm_quest(bvid, qid, token)
 
             if resp == True:
@@ -151,7 +153,7 @@ async def client_declare_succeeded(bvid: str, qid: int, token: str, wdcr: str = 
     async_session = sessionmaker(engine, expire_on_commit=True, class_=AsyncSession)
     async with async_session() as session:
         async with session.begin():
-            dal = DAL(engine, session, msg_core)
+            dal = DAL(engine, session, msg_core, loop=asyncio.get_running_loop())
             resp = await dal.client_declare_succeeded(bvid, qid, token, wdcr)
 
             if resp == True:
@@ -174,7 +176,7 @@ async def fetch_superman() -> dict:
         async_session = sessionmaker(engine, expire_on_commit=True, class_=AsyncSession)
         async with async_session() as session:
             async with session.begin():
-                dal = DAL(engine, session, msg_core)
+                dal = DAL(engine, session, msg_core, loop=asyncio.get_running_loop())
                 resp = await dal.fetch_superman()
                 lu_buffer_man.clear()
                 lu_buffer_man[current_time] = resp
@@ -194,7 +196,7 @@ async def fetch_accomplishment_rate() -> dict:
         async_session = sessionmaker(engine, expire_on_commit=True, class_=AsyncSession)
         async with async_session() as session:
             async with session.begin():
-                dal = DAL(engine, session, msg_core)
+                dal = DAL(engine, session, msg_core, loop=asyncio.get_running_loop())
                 resp = await dal.fetch_accomplishment_rate()
                 lu_buffer_rate.clear()
                 lu_buffer_rate[current_time] = resp
@@ -245,10 +247,12 @@ async def github_webhook_activated(req: Request, X_Hub_Signature_256: Optional[s
             while pull_stack:
                 refresh_db_flag = pull_stack.pop()
                 default_logger.info("Git push webhook trigered")
-                await git_pull(asyncio.get_running_loop())
+                loop = asyncio.get_running_loop()
+                await git_pull(loop)
                 default_logger.info("Git pulled")
                 if refresh_db_flag:
-                    await scan_and_reload(engine)
+                    dal = DAL(engine, None, msg_core, default_logger, loop=loop)
+                    await dal.scan_and_reload()
                     default_logger.info("Engine finish update")
                 else:
                     default_logger.info("Engine update passed")
