@@ -75,7 +75,7 @@ async def startup():
     初始扫描服务器，结束时关闭连接池
     '''
     loop = asyncio.get_running_loop()
-    dal = DAL(engine, None, msg_core, default_logger, logger=default_logger, loop=loop)
+    dal = DAL(engine, None, msg_core, logger=default_logger, loop=loop)
     await dal.scan_and_reload()
     loop = asyncio.get_running_loop()
     loop.create_task(dal.clean_task_daemon(msg_core))
