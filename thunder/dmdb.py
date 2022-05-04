@@ -299,56 +299,57 @@ class DAL:
     async def clean_task_daemon(self, msg_core):
         while True:
             async_session = sessionmaker(self.engine, expire_on_commit=True, class_=AsyncSession)
-            async with self.global_lock:
-                try:
+            try:
+                async with self.global_lock:
                     async with async_session() as session:
                         stmt = select(BVRelations.tname).where(BVRelations.bvid==BVStatus.bvid).where(BVStatus.finished==False).order_by(BVStatus.create_time.desc()).limit(23)
                         table_names_to_check = set((await session.execute(stmt)).scalars().all())
                         table_to_check = AbstractTable.__subclasses__() | Filter(lambda x: x.__tablename__ in table_names_to_check) | list
-                except Exception as e:
-                    self.logger.warning(f"{type(e)}: {e}")
-                else:
-                    for table in table_to_check:
-                        try:
-                            async with self.global_lock:
-                                async_session = sessionmaker(self.engine, expire_on_commit=True, class_=AsyncSession)
-                                async with async_session() as session:
-                                    # 检查表是否全部投递完毕
-                                    hit = (await session.execute(select(table).where(table.status < 3).limit(1))).scalars().all()
-                                    if not hit:
-                                        stmt = update(BVStatus).where(BVStatus.bvid == select(BVRelations.bvid).where(BVRelations.tname == table.__tablename__).limit(1)).values(finished = True)
-                                        await session.execute(stmt, execution_options={"synchronize_session": 'fetch'})
-                                        await session.commit()
-                                        # 全部投递完毕则更新并跳过
-                                        continue
-                                    # 检查并标记单P过量弹幕
-                                    count_lines = (await session.execute(select(table.cid, func.count(table.id)).where(table.status==0).group_by(table.cid))).all()
-                                    for cid, cid_count in count_lines:
-                                        diff_num = cid_count - 4800
-                                        if diff_num > 0:
-                                            devalues = (await session.execute(select(table).where(table.status==0).where(func.length(table.content) <= 6).order_by(func.random()).limit(diff_num))).scalars().all()
-                                            for item in devalues:
-                                                item.fail_count = 4
-                                                item.status = 3
-                                    # 更新表中未处理的连续失败状态，理论上这部分应该在业务中被完成，但可能由于各种原因遗漏。
-                                    latest_update = (await session.execute(select(table.id).where(table.status >= 3).where(table.fail_count<4).order_by(table.cmt_time.desc()).limit(1))).scalars().first()
-                                    if latest_update:
-                                        total_line_count = (await session.execute(select(func.count(table.id)))).scalars().first()
-                                        if (total_line_count - latest_update) < 500:
-                                            stmt = select(table).where(table.id == 1)
-                                        else:
-                                            stmt = select(table).where(table.id == 1).where(table.id < max(0, latest_update - 500))
-                                        archives = (await session.execute(stmt)).scalars().all()
-                                        if archives:
-                                            for item in archives:
-                                                item.fail_count += 1
-                                                if item.fail_count >= _MAXRETRY:
-                                                    item.status = 4
-                                                else:
-                                                    item.status = 0
+                        await session.commit()
+            except Exception as e:
+                self.logger.warning(f"{type(e)}: {e}")
+            else:
+                for table in table_to_check:
+                    try:
+                        async with self.global_lock:
+                            async_session = sessionmaker(self.engine, expire_on_commit=True, class_=AsyncSession)
+                            async with async_session() as session:
+                                # 检查表是否全部投递完毕
+                                hit = (await session.execute(select(table).where(table.status < 3).limit(1))).scalars().all()
+                                if not hit:
+                                    stmt = update(BVStatus).where(BVStatus.bvid == select(BVRelations.bvid).where(BVRelations.tname == table.__tablename__).limit(1)).values(finished = True)
+                                    await session.execute(stmt, execution_options={"synchronize_session": 'fetch'})
                                     await session.commit()
-                        except Exception as e:
-                            self.logger.warning(f"{type(e)}: {e}")
+                                    # 全部投递完毕则更新并跳过
+                                    continue
+                                # 检查并标记单P过量弹幕
+                                count_lines = (await session.execute(select(table.cid, func.count(table.id)).where(table.status==0).group_by(table.cid))).all()
+                                for cid, cid_count in count_lines:
+                                    diff_num = cid_count - 4800
+                                    if diff_num > 0:
+                                        devalues = (await session.execute(select(table).where(table.status==0).where(func.length(table.content) <= 6).order_by(func.random()).limit(diff_num))).scalars().all()
+                                        for item in devalues:
+                                            item.fail_count = 4
+                                            item.status = 3
+                                # 更新表中未处理的连续失败状态，理论上这部分应该在业务中被完成，但可能由于各种原因遗漏。
+                                latest_update = (await session.execute(select(table.id).where(table.status >= 3).where(table.fail_count<4).order_by(table.cmt_time.desc()).limit(1))).scalars().first()
+                                if latest_update:
+                                    total_line_count = (await session.execute(select(func.count(table.id)))).scalars().first()
+                                    if (total_line_count - latest_update) < 500:
+                                        stmt = select(table).where(table.id == 1)
+                                    else:
+                                        stmt = select(table).where(table.id == 1).where(table.id < max(0, latest_update - 500))
+                                    archives = (await session.execute(stmt)).scalars().all()
+                                    if archives:
+                                        for item in archives:
+                                            item.fail_count += 1
+                                            if item.fail_count >= _MAXRETRY:
+                                                item.status = 4
+                                            else:
+                                                item.status = 0
+                                await session.commit()
+                    except Exception as e:
+                        self.logger.warning(f"{type(e)}: {e}")
             await asyncio.sleep(random.randint(900, 1500))
 
     async def scan_and_reload(self):
