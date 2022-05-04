@@ -11,6 +11,8 @@ import time
 import base64
 import uuid
 import random
+import datetime
+import aiofiles
 from selectors import DefaultSelector, EVENT_READ, EVENT_WRITE
 from collections import deque
 from functools import partial
@@ -233,3 +235,24 @@ def captcha_str_filter(_):
         .lower()
         .replace('o','0')
     )
+
+async def request_statistics(request_count: list):
+    _dir = os.path.dirname(os.path.dirname(__file__))
+    _dir_file = os.path.join(_dir, "log_request.txt")
+    if not os.path.exists(_dir_file):
+        async with aiofiles.open(_dir_file, 'w', encoding='utf-8') as fp:
+            await fp.write("")
+    while True:
+        tick_1 = datetime.datetime.now()
+        tick_2 = tick_1.replace(hour=0, minute=0, second=0)
+        tick = tick_2 + datetime.timedelta(seconds = round((tick_1 - tick_2).total_seconds() / 60) * 60)
+        async with aiofiles.open(_dir_file, 'r', encoding='utf-8') as fp:
+            lines = await fp.readlines() 
+        if len(lines) > 14400:
+            lines = lines[-14400: ]
+        lines.append(f"[{tick.strftime('%Y-%m-%d %H:%M')}] {request_count[0]}\n")
+        request_count[0] = 0
+        async with aiofiles.open(_dir_file, 'w', encoding='utf-8') as fp:
+            await fp.writelines(lines)
+        now_time = datetime.datetime.now()
+        await asyncio.sleep(max(0, (tick + datetime.timedelta(seconds=60) - now_time).total_seconds()))

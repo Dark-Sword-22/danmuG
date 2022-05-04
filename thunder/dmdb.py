@@ -279,8 +279,10 @@ class DAL:
 
     async def task_status_daemon(self, table, qid):
         await asyncio.sleep(180)
-        async_session = sessionmaker(self.engine, expire_on_commit=True, class_=AsyncSession)
+        self.logger.info(f"DEBUG, WAIT LOCK -4")
         async with self.global_lock:
+            self.logger.info(f"DEBUG, GET LOCK -4")
+            async_session = sessionmaker(self.engine, expire_on_commit=True, class_=AsyncSession)
             async with async_session() as session:
                 item = (await session.execute(select(table).where(table.id == qid))).scalars().first()
                 if item:
@@ -295,12 +297,15 @@ class DAL:
                 if not unfinished_items:
                     stmt = update(BVStatus).where(BVStatus.bvid == select(BVRelations.bvid).where(BVRelations.tname == table.__tablename__)).values(finished = True)
                 await session.commit()
+        self.logger.info(f"DEBUG, RELEASE LOCK -4")
 
     async def clean_task_daemon(self, msg_core):
         while True:
-            async_session = sessionmaker(self.engine, expire_on_commit=True, class_=AsyncSession)
             try:
+                self.logger.info(f"DEBUG, WAIT LOCK -1")
                 async with self.global_lock:
+                    self.logger.info(f"DEBUG, GET LOCK -1")
+                    async_session = sessionmaker(self.engine, expire_on_commit=True, class_=AsyncSession)
                     async with async_session() as session:
                         stmt = select(BVRelations.tname).where(BVRelations.bvid==BVStatus.bvid).where(BVStatus.finished==False).order_by(BVStatus.create_time.desc()).limit(23)
                         table_names_to_check = set((await session.execute(stmt)).scalars().all())
@@ -310,8 +315,11 @@ class DAL:
                 self.logger.warning(f"{type(e)}: {e}")
             else:
                 for table in table_to_check:
+                    self.logger.info(f"DEBUG, START LOOP -2")
                     try:
+                        self.logger.info(f"DEBUG, WAIT LOCK -2")
                         async with self.global_lock:
+                            self.logger.info(f"DEBUG, GET LOCK -2")
                             async_session = sessionmaker(self.engine, expire_on_commit=True, class_=AsyncSession)
                             async with async_session() as session:
                                 # 检查表是否全部投递完毕
@@ -350,6 +358,8 @@ class DAL:
                                 await session.commit()
                     except Exception as e:
                         self.logger.warning(f"{type(e)}: {e}")
+                    finally:
+                        self.logger.info(f"DEBUG, OUT OF LOOP -1")
             await asyncio.sleep(random.randint(900, 1500))
 
     async def scan_and_reload(self):
@@ -463,8 +473,10 @@ class DAL:
             await conn.run_sync(Base.metadata.create_all)
 
         for file_name, table in zip(files_legal, tables):
-            async_session = sessionmaker(self.engine, expire_on_commit=False, class_=AsyncSession)
+            self.logger.info(f"DEBUG, WAIT LOCK -3")
             async with self.global_lock:
+                self.logger.info(f"DEBUG, GET LOCK -3")
+                async_session = sessionmaker(self.engine, expire_on_commit=False, class_=AsyncSession)
                 async with async_session() as session:
                     file_path = os.path.join(data_dir, file_name)
                     async with aiofiles.open(file_path, 'r', encoding='utf-8') as f:
@@ -499,3 +511,4 @@ class DAL:
                             stmt = insert(table).values(_tup).on_conflict_do_nothing() if _tup else text("select 1")
                             await session.execute(stmt)  
                     await session.commit()
+            self.logger.info(f"DEBUG, RELEASE LOCK -3")

@@ -10,7 +10,7 @@ from fastapi import FastAPI, Request, Header, WebSocket, HTTPException, WebSocke
 from fastapi.responses import ORJSONResponse, HTMLResponse
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from dmutils import AsyncIteratorWrapper, git_pull, ConfigParser, EpolledTailFile, ws_coro_main, ws_coro_heartbeat
+from dmutils import AsyncIteratorWrapper, git_pull, ConfigParser, EpolledTailFile, ws_coro_main, ws_coro_heartbeat, request_statistics
 from dmdb import *
 
 import platform 
@@ -67,6 +67,7 @@ else: error_codes = dict(error_codes)
 
 default_logger = logging.getLogger("uvicorn")
 msg_core = {}
+request_count = [0, ]
 
 @app.on_event("startup")
 async def startup():
@@ -78,6 +79,7 @@ async def startup():
     await dal.scan_and_reload()
     loop = asyncio.get_running_loop()
     loop.create_task(dal.clean_task_daemon(msg_core))
+    loop.create_task(request_statistics(request_count))
 
 @app.on_event("shutdown")
 async def shutdown():
@@ -103,12 +105,14 @@ async def response_logger_hacking(request: Request, call_next):
 
 @app.get("/api/quest-apply", response_class=ORJSONResponse)
 async def get_archive_earliest(mode: Literal["auto", "specified"], bvid: Optional[str] = None) -> dict:
-    async_session = sessionmaker(engine, expire_on_commit=True, class_=AsyncSession)
+
     '''
     一个投递流程分为三步， client 先获取任务，再确认要提交的任务，最后确认已经提交成功。
     其对应的后端 status 为 0,1,3
     目前这个 handler 处理的是第一步，可以指定 BVID 或者选择自动获取最新视频的弹幕
     '''
+    request_count[0] += 1
+    async_session = sessionmaker(engine, expire_on_commit=True, class_=AsyncSession)
     async with async_session() as session:
         async with session.begin():
             dal = DAL(engine, session, msg_core, loop=asyncio.get_running_loop())
@@ -127,6 +131,7 @@ async def client_confirm_quest(bvid: str, qid: int, token: str) -> dict:
     见 get_archive_earliest
     确认任务并修改状态至 1
     '''
+    request_count[0] += 1
     async_session = sessionmaker(engine, expire_on_commit=True, class_=AsyncSession)
     async with async_session() as session:
         async with session.begin():
@@ -146,6 +151,7 @@ async def client_declare_succeeded(bvid: str, qid: int, token: str, wdcr: str = 
     检查投递成功并更新状态。限制最大用户名长度作为防止xss的另一层手段。
     如果用户为匿名则默认从两个用户名中选一个。
     '''
+    request_count[0] += 1
     if wdcr == 'anonymous':
         wdcr = random.sample(('神秘好哥哥', '缺神'), 1)[0]
     if len(wdcr) > 15:
