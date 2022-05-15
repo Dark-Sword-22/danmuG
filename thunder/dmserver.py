@@ -61,6 +61,7 @@ error_codes = [
     [{"loc":["query","token"],"msg":"token test fail","type":"value_error"}],                   # -3
     [{"loc":["query","bvid"],"msg":"video not found","type":"value_error"}],                    # -4
     [{"loc":["query","bvid"],"msg":"check fail","type":"assertion_error"}],                     # -5
+    [{"loc":["query","bvid"],"msg":"no deliverable content","type":"not_found_error"}],         # -6
 ]
 for idx in range(len(error_codes)): error_codes[idx] = (-idx-1, {'success':0, 'detail':error_codes[idx]})
 else: error_codes = dict(error_codes)
@@ -120,7 +121,8 @@ async def get_archive_earliest(mode: Literal["auto", "specified"], bvid: Optiona
             if isinstance(resp, tuple):
                 return {'success': 1, 'data': dict(zip(('id', 'progress', 'cid', 'bvid', 'msg', 'token', 'bias'), resp))}
             elif isinstance(resp, bool) and resp == True:
-                return {'success': 1, 'data': {'a':1, 'b':2, 'c':3, 'd':4, 'e':5, 'f':6, 'bias':0}}
+                return error_codes[-6]
+                # return {'success': 1, 'data': {'a':1, 'b':2, 'c':3, 'd':4, 'e':5, 'f':6, 'bias':0}}
             elif isinstance(resp, int):
                 return error_codes[resp]
             return {}
