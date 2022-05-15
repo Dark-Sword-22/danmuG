@@ -17,7 +17,7 @@ except:
 VIDEO_HEIGHT = 1080 # px
 VIDEO_WIDTH = 1920 # px
 GLOBAL_PADDING_H = 5 # px
-FONT_SIZE = 50
+FONT_SIZE = 40
 TRACK_NUM = int(VIDEO_HEIGHT / (FONT_SIZE + GLOBAL_PADDING_H * 2))
 
 class OrbitalLauncher:
