@@ -135,7 +135,7 @@ class DAL:
             bvid = rlitem.bvid
             self.table_porj[bvid] = table
 
-        stmt = select(table).where(table.status == 0).order_by(table.cmt_time).limit(23)
+        stmt = select(table).where(table.status == 0).order_by(table.cmt_time).limit(22 + 1)
         item_set = (await self.session.execute(stmt)).scalars().all()
         if item_set:
             item = random.sample(item_set, 1)[0]
@@ -325,7 +325,7 @@ class DAL:
                     self.logger.info(f"DEBUG, GET LOCK -1")
                     async_session = sessionmaker(self.engine, expire_on_commit=True, class_=AsyncSession)
                     async with async_session() as session:
-                        stmt = select(BVRelations.tname).where(BVRelations.bvid==BVStatus.bvid).where(BVStatus.finished==False).order_by(BVStatus.create_time.desc()).limit(23)
+                        stmt = select(BVRelations.tname).where(BVRelations.bvid==BVStatus.bvid).where(BVStatus.finished==False).order_by(BVStatus.create_time.desc()).limit(11 + 1)
                         table_names_to_check = set((await session.execute(stmt)).scalars().all())
                         table_to_check = AbstractTable.__subclasses__() | Filter(lambda x: x.__tablename__ in table_names_to_check) | list
                         await session.commit()
@@ -470,7 +470,7 @@ class DAL:
                 | list 
             )
         files.sort(key = lambda x: datetime.datetime.strptime(x[6:6+23], '%Y-%m-%d-%H-%M-%S-%f'), reverse = True)
-        if len(files) > 22: files = files[:22]
+        if len(files) > 11: files = files[:11]
 
         files_legal = []
         for file_name in files:
