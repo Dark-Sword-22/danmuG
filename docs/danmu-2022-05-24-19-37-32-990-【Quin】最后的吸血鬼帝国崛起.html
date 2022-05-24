@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <style type="text/css">
+      #main-chart {
+        display: block;
+      }
+      #tab1 {
+        display: block;
+      }
+      .he-line {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    </style> 
+  <link rel="icon" type="image/x-icon" href="/danmuG/favicon.ico"/>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+  <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/echarts@4.9.0/dist/echarts.min.js" type="text/javascript"></script>
+  </head>
+  <body style="margin:0;padding:0">
+    <div id="app">
+      <div class="flex flex-col">
+        <div class="flex-initial flex flex-row justify-center pt-2 pl-2">
+          <!-- <div class="flex-none w-28 items-center pt-1"><h1 class="font-extrabold text-2xl  text-gray-900">图表部分</h1></div> -->
+          <!-- <div class="flex-grow items-center">
+            <button class="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded-full" id='bt1'>
+            -
+            </button>
+          </div> -->
+        </div>
+        <div class="px-2" style="width:1900px;height:900px" id="main-chart">
+          <div class="chart-container" id="a70ec8b8394b41309d6dbbbed4f9f6b9" style="width:1900px; height:900px;"></div>
+        </div>
+        <div class="flex-initial flex flex-row justify-center pt-2 pl-2 mt-8 ml-2 mb-2">
+          <div class="flex-none w-40 items-center pt-1" id='pata-n-ao'><h1 class="font-extrabold text-2xl text-gray-900">高能时间统计</h1></div>
+          <div class="flex-grow items-center">
+            <button class="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded-full" @click="bt2clicked">
+            {{button_str}}
+            </button>
+          </div>
+        </div>
+        <div id="tab1" class="ml-2">
+          <div class="flex flex-col">
+            <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+              <div class="py-2 align-middle inline-block sm:px-6 lg:px-8">
+                <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
+                  <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                      <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          实际发生时间
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          参考时间
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          弹幕数量
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          弹幕内容
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                      <tr v-for="(obj, i) in trs_data_zfill">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                          <div class="text-sm text-gray-500">
+                            {{obj[1]}}
+                          </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                          <div class="flex items-center">
+                              <div class="text-sm font-medium text-gray-900">
+                                {{obj[0]}}
+                              </div>
+                          </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                          <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                            {{obj[2]}}
+                          </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                          <div class="text-sm text-gray-500">
+                            {{obj[3]}}
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="mt-8 ml-3 mb-8 tracking-wide text-gray-800  mx-auto px-4">
+          <div class='relative m-0 shadow-lg flex bg-white max-w-full rounded'>
+            <div class='flex-1 card-block relative '>
+              <div class="p-6">
+                <h4 class='font-medium text-2xl mb-3'>秦国今日高能时刻&ensp;dark-sword-22.github.io<br></h4>
+                <div v-for="(item, i) in tag_data_zfill" class="leading-normal he-line">
+                  <span class="text-blue-500"><a href="https://bilibili.com/">{{item[1][0]}}#{{item[1][1]}}:{{item[1][2]}}</a></span>
+                  <span class="ml-1 font-normal">
+                    <span v-for="(tag, i) in item[0].split(' ')" class="bg-gray-100 rounded ml-2">&ensp;{{tag}}&ensp;</span>
+                  </span>
+                </div>
+                <div class="text-sm text-grey block mt-6 font-semibold flex w-full">
+                  <div class="flex-none">本评论由弹幕G重伤倒地是否做错了什么自动生成&ensp;(<ゝω·)☆</div>
+                  <div class="flex-grow flex flex-row-reverse">
+                    <div><input class="pl-12 pr-6 py-3 rounded outline-none w-48 focus:ring focus:border-blue-300" type="text" placeholder="Fix: default +0s" v-model="prefix"></div>
+                    <div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      let jsonStr='[]'
+      let tag_data = JSON.parse(jsonStr)
+      let trsJsonStr='[["00:06:55", "2022-05-24 19:44:27", 29.5, "#\\u54e6\\u54df\\u5c45\\u7136\\u6765\\u4e86, #\\u7d22\\u7d22 \\u8c01\\u5728\\u4e4e\\u5462, #\\u8c01\\u6765\\u8c01\\u6b7b, #\\u8c01\\u6765\\u8c01\\u5361, #\\u8c01\\u6765\\u8c01\\u6b7b\\u5206p, #\\u7d22\\u5c3c\\u6765\\u4e2d\\u8defgank\\u4e86, #\\u8c01\\u6765\\u8c01\\u6b7b\\uff0c\\u6211\\u6b7b\\u4e86, #\\u8c01\\u6765\\u8c01\\u6b7b\\u4e86\\u8fd9\\u4e0b, #\\u88ab\\u53d4\\u53d4\\u51fb\\u6bd9\\u5566, #\\u5f00\\u64ad\\u52a8\\u6001\\u53c8\\u88ab\\u53d4\\u53d4\\u5939\\u4e86"]]'
+      let trs_data = JSON.parse(trsJsonStr)
+    </script>
+    <script>
+      var app = new Vue({
+        el: '#app',
+        data: {
+          message: 'Hello Vue!',
+          tb_display: "block",
+          button_str: "-",
+          tag_data: tag_data,
+          trs_data: trs_data,
+          prefix: "",
+        },
+        methods: {
+          bt2clicked() {
+            if (this.tb_display === 'block') {
+              document.getElementById('tab1').style.display = "none";
+              this.tb_display = "none";
+              this.button_str = '+';
+            } else {
+              document.getElementById('tab1').style.display = "block";
+              this.tb_display = "block";
+              this.button_str = '-';
+            }
+          },
+          pad(num, size) {
+              num = num.toString();
+              while (num.length < size) num = "0" + num;
+              return num;
+          }
+        },
+        computed: {
+          tag_data_zfill() {
+            let lamb = (tuple) => {
+              let orn_seconds = tuple[1][0] * 3600 + tuple[1][1] * 60 + tuple[1][2] + this.prefix_int
+              let d1 = parseInt(orn_seconds/3600) + 1
+              let d2 = parseInt((orn_seconds%3600)/60)
+              let d3 = parseInt(orn_seconds%60)
+              return [tuple[0], [d1.toString(), this.pad(d2, 2), this.pad(d3, 2)]]
+            }
+            return this.tag_data.map(lamb)
+          },
+          trs_data_zfill() {
+            let lamb = (tuple) => {
+              let orn_seconds = parseInt(tuple[0].substring(0,2)) * 3600 + parseInt(tuple[0].substring(3,5)) * 60 + parseInt(tuple[0].substring(7,9)) + this.prefix_int
+              let d1 = parseInt(orn_seconds/3600)
+              let d2 = parseInt((orn_seconds%3600)/60)
+              let d3 = parseInt(orn_seconds%60)
+              return [this.pad(d1, 2)+':'+this.pad(d2, 2)+':'+this.pad(d3, 2),tuple[1],tuple[2],tuple[3]]
+            }
+            return this.trs_data.map(lamb)
+          },
+          prefix_int(){
+            if (this.prefix === '') {
+              return 0
+            } else {
+              return parseInt(this.prefix)
+            }
+          }
+        }
+      })
+    </script>
+    <script>
+        var chart_a70ec8b8394b41309d6dbbbed4f9f6b9 = echarts.init(
+            document.getElementById('a70ec8b8394b41309d6dbbbed4f9f6b9'), 'light', {renderer: 'canvas'});
+        var option_a70ec8b8394b41309d6dbbbed4f9f6b9 = {
+    "animation": true,
+    "animationThreshold": 2000,
+    "animationDuration": 1000,
+    "animationEasing": "cubicOut",
+    "animationDelay": 0,
+    "animationDurationUpdate": 300,
+    "animationEasingUpdate": "cubicOut",
+    "animationDelayUpdate": 0,
+    "color": [],
+    "series": [
+        {
+            "type": "line",
+            "name": "base-line",
+            "connectNulls": false,
+            "xAxisIndex": 0,
+            "yAxisIndex": 0,
+            "symbolSize": 4,
+            "showSymbol": true,
+            "smooth": false,
+            "clip": true,
+            "step": false,
+            "data": [
+                [
+                    "00:00:00",
+                    0
+                ],
+                [
+                    "00:00:05",
+                    2
+                ],
+                [
+                    "00:00:10",
+                    2
+                ],
+                [
+                    "00:00:15",
+                    2.25
+                ],
+                [
+                    "00:00:20",
+                    3.25
+                ],
+                [
+                    "00:00:25",
+                    3.75
+                ],
+                [
+                    "00:00:30",
+                    4.0
+                ],
+                [
+                    "00:00:35",
+                    4.75
+                ],
+                [
+                    "00:00:40",
+                    4.25
+                ],
+                [
+                    "00:00:45",
+                    3.75
+                ],
+                [
+                    "00:00:50",
+                    3.75
+                ],
+                [
+                    "00:00:55",
+                    2.0
+                ],
+                [
+                    "00:01:00",
+                    2.25
+                ],
+                [
+                    "00:01:05",
+                    2.5
+                ],
+                [
+                    "00:01:10",
+                    1.75
+                ],
+                [
+                    "00:01:15",
+                    2.5
+                ],
+                [
+                    "00:01:20",
+                    2.0
+                ],
+                [
+                    "00:01:25",
+                    3.0
+                ],
+                [
+                    "00:01:30",
+                    4.75
+                ],
+                [
+                    "00:01:35",
+                    5.0
+                ],
+                [
+                    "00:01:40",
+                    5.25
+                ],
+                [
+                    "00:01:45",
+                    3.75
+                ],
+                [
+                    "00:01:50",
+                    3.5
+                ],
+                [
+                    "00:01:55",
+                    2.75
+                ],
+                [
+                    "00:02:00",
+                    2.75
+                ],
+                [
+                    "00:02:05",
+                    2.5
+                ],
+                [
+                    "00:02:10",
+                    1.75
+                ],
+                [
+                    "00:02:15",
+                    1.5
+                ],
+                [
+                    "00:02:20",
+                    1.25
+                ],
+                [
+                    "00:02:25",
+                    1.5
+                ],
+                [
+                    "00:02:30",
+                    0.75
+                ],
+                [
+                    "00:02:35",
+                    0.5
+                ],
+                [
+                    "00:02:40",
+                    0.5
+                ],
+                [
+                    "00:02:45",
+                    0.25
+                ],
+                [
+                    "00:02:50",
+                    0.75
+                ],
+                [
+                    "00:02:55",
+                    1.0
+                ],
+                [
+                    "00:03:00",
+                    0.75
+                ],
+                [
+                    "00:03:05",
+                    1.0
+                ],
+                [
+                    "00:03:10",
+                    1.5
+                ],
+                [
+                    "00:03:15",
+                    2.5
+                ],
+                [
+                    "00:03:20",
+                    3.5
+                ],
+                [
+                    "00:03:25",
+                    6.25
+                ],
+                [
+                    "00:03:30",
+                    6.5
+                ],
+                [
+                    "00:03:35",
+                    7.5
+                ],
+                [
+                    "00:03:40",
+                    8.5
+                ],
+                [
+                    "00:03:45",
+                    6.75
+                ],
+                [
+                    "00:03:50",
+                    6.75
+                ],
+                [
+                    "00:03:55",
+                    5.0
+                ],
+                [
+                    "00:04:00",
+                    4.0
+                ],
+                [
+                    "00:04:05",
+                    3.0
+                ],
+                [
+                    "00:04:10",
+                    2.5
+                ],
+                [
+                    "00:04:15",
+                    2.75
+                ],
+                [
+                    "00:04:20",
+                    2.25
+                ],
+                [
+                    "00:04:25",
+                    3.0
+                ],
+                [
+                    "00:04:30",
+                    2.5
+                ],
+                [
+                    "00:04:35",
+                    2.0
+                ],
+                [
+                    "00:04:40",
+                    1.5
+                ],
+                [
+                    "00:04:45",
+                    1.0
+                ],
+                [
+                    "00:04:50",
+                    0.75
+                ],
+                [
+                    "00:04:55",
+                    0.75
+                ],
+                [
+                    "00:05:00",
+                    1.25
+                ],
+                [
+                    "00:05:05",
+                    1.25
+                ],
+                [
+                    "00:05:10",
+                    2.0
+                ],
+                [
+                    "00:05:15",
+                    2.5
+                ],
+                [
+                    "00:05:20",
+                    2.0
+                ],
+                [
+                    "00:05:25",
+                    2.0
+                ],
+                [
+                    "00:05:30",
+                    1.75
+                ],
+                [
+                    "00:05:35",
+                    2.75
+                ],
+                [
+                    "00:05:40",
+                    3.5
+                ],
+                [
+                    "00:05:45",
+                    3.25
+                ],
+                [
+                    "00:05:50",
+                    2.75
+                ],
+                [
+                    "00:05:55",
+                    1.75
+                ],
+                [
+                    "00:06:00",
+                    2.0
+                ],
+                [
+                    "00:06:05",
+                    2.25
+                ],
+                [
+                    "00:06:10",
+                    3.75
+                ],
+                [
+                    "00:06:15",
+                    3.75
+                ],
+                [
+                    "00:06:20",
+                    3.25
+                ],
+                [
+                    "00:06:25",
+                    4.0
+                ],
+                [
+                    "00:06:30",
+                    3.5
+                ],
+                [
+                    "00:06:35",
+                    3.25
+                ],
+                [
+                    "00:06:40",
+                    3.25
+                ],
+                [
+                    "00:06:45",
+                    2.0
+                ],
+                [
+                    "00:06:50",
+                    5.25
+                ],
+                [
+                    "00:06:55",
+                    16.0
+                ],
+                [
+                    "00:07:00",
+                    "-"
+                ],
+                [
+                    "00:07:05",
+                    "-"
+                ],
+                [
+                    "00:07:10",
+                    "-"
+                ],
+                [
+                    "00:07:15",
+                    "-"
+                ],
+                [
+                    "00:07:20",
+                    "-"
+                ],
+                [
+                    "00:07:25",
+                    "-"
+                ],
+                [
+                    "00:07:30",
+                    "-"
+                ],
+                [
+                    "00:07:35",
+                    8.5
+                ],
+                [
+                    "00:07:40",
+                    7.0
+                ],
+                [
+                    "00:07:45",
+                    7.25
+                ],
+                [
+                    "00:07:50",
+                    8.5
+                ],
+                [
+                    "00:07:55",
+                    7.0
+                ],
+                [
+                    "00:08:00",
+                    6.0
+                ],
+                [
+                    "00:08:05",
+                    5.0
+                ],
+                [
+                    "00:08:10",
+                    3.25
+                ],
+                [
+                    "00:08:15",
+                    3.0
+                ],
+                [
+                    "00:08:20",
+                    2.75
+                ],
+                [
+                    "00:08:25",
+                    2.5
+                ],
+                [
+                    "00:08:30",
+                    2.5
+                ],
+                [
+                    "00:08:35",
+                    3.0
+                ],
+                [
+                    "00:08:40",
+                    3.25
+                ]
+            ],
+            "hoverAnimation": true,
+            "label": {
+                "show": false,
+                "position": "top",
+                "margin": 8
+            },
+            "lineStyle": {
+                "show": true,
+                "width": 1,
+                "opacity": 1,
+                "curveness": 0,
+                "type": "solid"
+            },
+            "areaStyle": {
+                "opacity": 0
+            },
+            "markPoint": {
+                "label": {
+                    "show": true,
+                    "position": "inside",
+                    "color": "#fff",
+                    "margin": 8
+                },
+                "data": [
+                    {
+                        "name": "\u6700\u5c0f\u503c",
+                        "type": "min"
+                    }
+                ]
+            },
+            "zlevel": 0,
+            "z": 0
+        },
+        {
+            "type": "line",
+            "name": "pata-n-ao",
+            "connectNulls": false,
+            "xAxisIndex": 0,
+            "yAxisIndex": 0,
+            "symbolSize": 4,
+            "showSymbol": true,
+            "smooth": false,
+            "clip": true,
+            "step": false,
+            "data": [
+                [
+                    "00:00:00",
+                    "-"
+                ],
+                [
+                    "00:00:05",
+                    "-"
+                ],
+                [
+                    "00:00:10",
+                    "-"
+                ],
+                [
+                    "00:00:15",
+                    "-"
+                ],
+                [
+                    "00:00:20",
+                    "-"
+                ],
+                [
+                    "00:00:25",
+                    "-"
+                ],
+                [
+                    "00:00:30",
+                    "-"
+                ],
+                [
+                    "00:00:35",
+                    "-"
+                ],
+                [
+                    "00:00:40",
+                    "-"
+                ],
+                [
+                    "00:00:45",
+                    "-"
+                ],
+                [
+                    "00:00:50",
+                    "-"
+                ],
+                [
+                    "00:00:55",
+                    "-"
+                ],
+                [
+                    "00:01:00",
+                    "-"
+                ],
+                [
+                    "00:01:05",
+                    "-"
+                ],
+                [
+                    "00:01:10",
+                    "-"
+                ],
+                [
+                    "00:01:15",
+                    "-"
+                ],
+                [
+                    "00:01:20",
+                    "-"
+                ],
+                [
+                    "00:01:25",
+                    "-"
+                ],
+                [
+                    "00:01:30",
+                    "-"
+                ],
+                [
+                    "00:01:35",
+                    "-"
+                ],
+                [
+                    "00:01:40",
+                    "-"
+                ],
+                [
+                    "00:01:45",
+                    "-"
+                ],
+                [
+                    "00:01:50",
+                    "-"
+                ],
+                [
+                    "00:01:55",
+                    "-"
+                ],
+                [
+                    "00:02:00",
+                    "-"
+                ],
+                [
+                    "00:02:05",
+                    "-"
+                ],
+                [
+                    "00:02:10",
+                    "-"
+                ],
+                [
+                    "00:02:15",
+                    "-"
+                ],
+                [
+                    "00:02:20",
+                    "-"
+                ],
+                [
+                    "00:02:25",
+                    "-"
+                ],
+                [
+                    "00:02:30",
+                    "-"
+                ],
+                [
+                    "00:02:35",
+                    "-"
+                ],
+                [
+                    "00:02:40",
+                    "-"
+                ],
+                [
+                    "00:02:45",
+                    "-"
+                ],
+                [
+                    "00:02:50",
+                    "-"
+                ],
+                [
+                    "00:02:55",
+                    "-"
+                ],
+                [
+                    "00:03:00",
+                    "-"
+                ],
+                [
+                    "00:03:05",
+                    "-"
+                ],
+                [
+                    "00:03:10",
+                    "-"
+                ],
+                [
+                    "00:03:15",
+                    "-"
+                ],
+                [
+                    "00:03:20",
+                    "-"
+                ],
+                [
+                    "00:03:25",
+                    "-"
+                ],
+                [
+                    "00:03:30",
+                    "-"
+                ],
+                [
+                    "00:03:35",
+                    7.5
+                ],
+                [
+                    "00:03:40",
+                    8.5
+                ],
+                [
+                    "00:03:45",
+                    6.75
+                ],
+                [
+                    "00:03:50",
+                    "-"
+                ],
+                [
+                    "00:03:55",
+                    "-"
+                ],
+                [
+                    "00:04:00",
+                    "-"
+                ],
+                [
+                    "00:04:05",
+                    "-"
+                ],
+                [
+                    "00:04:10",
+                    "-"
+                ],
+                [
+                    "00:04:15",
+                    "-"
+                ],
+                [
+                    "00:04:20",
+                    "-"
+                ],
+                [
+                    "00:04:25",
+                    "-"
+                ],
+                [
+                    "00:04:30",
+                    "-"
+                ],
+                [
+                    "00:04:35",
+                    "-"
+                ],
+                [
+                    "00:04:40",
+                    "-"
+                ],
+                [
+                    "00:04:45",
+                    "-"
+                ],
+                [
+                    "00:04:50",
+                    "-"
+                ],
+                [
+                    "00:04:55",
+                    "-"
+                ],
+                [
+                    "00:05:00",
+                    "-"
+                ],
+                [
+                    "00:05:05",
+                    "-"
+                ],
+                [
+                    "00:05:10",
+                    "-"
+                ],
+                [
+                    "00:05:15",
+                    "-"
+                ],
+                [
+                    "00:05:20",
+                    "-"
+                ],
+                [
+                    "00:05:25",
+                    "-"
+                ],
+                [
+                    "00:05:30",
+                    "-"
+                ],
+                [
+                    "00:05:35",
+                    "-"
+                ],
+                [
+                    "00:05:40",
+                    "-"
+                ],
+                [
+                    "00:05:45",
+                    "-"
+                ],
+                [
+                    "00:05:50",
+                    "-"
+                ],
+                [
+                    "00:05:55",
+                    "-"
+                ],
+                [
+                    "00:06:00",
+                    "-"
+                ],
+                [
+                    "00:06:05",
+                    "-"
+                ],
+                [
+                    "00:06:10",
+                    "-"
+                ],
+                [
+                    "00:06:15",
+                    "-"
+                ],
+                [
+                    "00:06:20",
+                    "-"
+                ],
+                [
+                    "00:06:25",
+                    "-"
+                ],
+                [
+                    "00:06:30",
+                    "-"
+                ],
+                [
+                    "00:06:35",
+                    "-"
+                ],
+                [
+                    "00:06:40",
+                    "-"
+                ],
+                [
+                    "00:06:45",
+                    "-"
+                ],
+                [
+                    "00:06:50",
+                    5.25
+                ],
+                [
+                    "00:06:55",
+                    16.0
+                ],
+                [
+                    "00:07:00",
+                    23.5
+                ],
+                [
+                    "00:07:05",
+                    29.25
+                ],
+                [
+                    "00:07:10",
+                    29.5
+                ],
+                [
+                    "00:07:15",
+                    22.75
+                ],
+                [
+                    "00:07:20",
+                    18.0
+                ],
+                [
+                    "00:07:25",
+                    14.0
+                ],
+                [
+                    "00:07:30",
+                    10.5
+                ],
+                [
+                    "00:07:35",
+                    8.5
+                ],
+                [
+                    "00:07:40",
+                    7.0
+                ],
+                [
+                    "00:07:45",
+                    7.25
+                ],
+                [
+                    "00:07:50",
+                    8.5
+                ],
+                [
+                    "00:07:55",
+                    7.0
+                ],
+                [
+                    "00:08:00",
+                    "-"
+                ],
+                [
+                    "00:08:05",
+                    "-"
+                ],
+                [
+                    "00:08:10",
+                    "-"
+                ],
+                [
+                    "00:08:15",
+                    "-"
+                ],
+                [
+                    "00:08:20",
+                    "-"
+                ],
+                [
+                    "00:08:25",
+                    "-"
+                ],
+                [
+                    "00:08:30",
+                    "-"
+                ],
+                [
+                    "00:08:35",
+                    "-"
+                ],
+                [
+                    "00:08:40",
+                    "-"
+                ]
+            ],
+            "hoverAnimation": true,
+            "label": {
+                "show": true,
+                "position": "top",
+                "margin": 8
+            },
+            "lineStyle": {
+                "show": true,
+                "width": 2,
+                "opacity": 1,
+                "curveness": 0,
+                "type": "solid",
+                "color": "orange"
+            },
+            "areaStyle": {
+                "opacity": 0
+            },
+            "markPoint": {
+                "label": {
+                    "show": true,
+                    "position": "inside",
+                    "color": "#fff",
+                    "margin": 8
+                },
+                "data": [
+                    {
+                        "name": "\u6700\u5927\u503c",
+                        "type": "max"
+                    }
+                ]
+            },
+            "markLine": {
+                "silent": false,
+                "precision": 2,
+                "label": {
+                    "show": true,
+                    "position": "top",
+                    "margin": 8
+                },
+                "data": [
+                    {
+                        "name": "\u5e73\u5747\u503c",
+                        "yAxis": 8.03
+                    }
+                ]
+            },
+            "zlevel": 0,
+            "z": 0
+        }
+    ],
+    "legend": [
+        {
+            "data": [
+                "base-line",
+                "pata-n-ao"
+            ],
+            "selected": {
+                "base-line": true,
+                "pata-n-ao": true
+            },
+            "show": true,
+            "padding": 5,
+            "itemGap": 10,
+            "itemWidth": 25,
+            "itemHeight": 14
+        }
+    ],
+    "tooltip": {
+        "show": true,
+        "trigger": "axis",
+        "triggerOn": "mousemove|click",
+        "axisPointer": {
+            "type": "line"
+        },
+        "showContent": true,
+        "alwaysShowContent": false,
+        "showDelay": 0,
+        "hideDelay": 100,
+        "textStyle": {
+            "fontSize": 14
+        },
+        "borderWidth": 0,
+        "padding": 5
+    },
+    "xAxis": [
+        {
+            "type": "category",
+            "show": true,
+            "scale": false,
+            "nameLocation": "end",
+            "nameGap": 15,
+            "gridIndex": 0,
+            "inverse": false,
+            "offset": 0,
+            "splitNumber": 5,
+            "boundaryGap": false,
+            "minInterval": 0,
+            "splitLine": {
+                "show": false,
+                "lineStyle": {
+                    "show": true,
+                    "width": 1,
+                    "opacity": 1,
+                    "curveness": 0,
+                    "type": "solid"
+                }
+            },
+            "data": [
+                "00:00:00",
+                "00:00:05",
+                "00:00:10",
+                "00:00:15",
+                "00:00:20",
+                "00:00:25",
+                "00:00:30",
+                "00:00:35",
+                "00:00:40",
+                "00:00:45",
+                "00:00:50",
+                "00:00:55",
+                "00:01:00",
+                "00:01:05",
+                "00:01:10",
+                "00:01:15",
+                "00:01:20",
+                "00:01:25",
+                "00:01:30",
+                "00:01:35",
+                "00:01:40",
+                "00:01:45",
+                "00:01:50",
+                "00:01:55",
+                "00:02:00",
+                "00:02:05",
+                "00:02:10",
+                "00:02:15",
+                "00:02:20",
+                "00:02:25",
+                "00:02:30",
+                "00:02:35",
+                "00:02:40",
+                "00:02:45",
+                "00:02:50",
+                "00:02:55",
+                "00:03:00",
+                "00:03:05",
+                "00:03:10",
+                "00:03:15",
+                "00:03:20",
+                "00:03:25",
+                "00:03:30",
+                "00:03:35",
+                "00:03:40",
+                "00:03:45",
+                "00:03:50",
+                "00:03:55",
+                "00:04:00",
+                "00:04:05",
+                "00:04:10",
+                "00:04:15",
+                "00:04:20",
+                "00:04:25",
+                "00:04:30",
+                "00:04:35",
+                "00:04:40",
+                "00:04:45",
+                "00:04:50",
+                "00:04:55",
+                "00:05:00",
+                "00:05:05",
+                "00:05:10",
+                "00:05:15",
+                "00:05:20",
+                "00:05:25",
+                "00:05:30",
+                "00:05:35",
+                "00:05:40",
+                "00:05:45",
+                "00:05:50",
+                "00:05:55",
+                "00:06:00",
+                "00:06:05",
+                "00:06:10",
+                "00:06:15",
+                "00:06:20",
+                "00:06:25",
+                "00:06:30",
+                "00:06:35",
+                "00:06:40",
+                "00:06:45",
+                "00:06:50",
+                "00:06:55",
+                "00:07:00",
+                "00:07:05",
+                "00:07:10",
+                "00:07:15",
+                "00:07:20",
+                "00:07:25",
+                "00:07:30",
+                "00:07:35",
+                "00:07:40",
+                "00:07:45",
+                "00:07:50",
+                "00:07:55",
+                "00:08:00",
+                "00:08:05",
+                "00:08:10",
+                "00:08:15",
+                "00:08:20",
+                "00:08:25",
+                "00:08:30",
+                "00:08:35",
+                "00:08:40"
+            ]
+        }
+    ],
+    "yAxis": [
+        {
+            "show": true,
+            "scale": true,
+            "nameLocation": "end",
+            "nameGap": 15,
+            "gridIndex": 0,
+            "inverse": false,
+            "offset": 0,
+            "splitNumber": 5,
+            "minInterval": 0,
+            "splitLine": {
+                "show": false,
+                "lineStyle": {
+                    "show": true,
+                    "width": 1,
+                    "opacity": 1,
+                    "curveness": 0,
+                    "type": "solid"
+                }
+            }
+        }
+    ],
+    "title": [
+        {
+            "text": "danmu-2022-05-24-19-37-32-990-\u3010Quin\u3011\u6700\u540e\u7684\u5438\u8840\u9b3c\u5e1d\u56fd\u5d1b\u8d77.txt",
+            "link": "/danmuG/",
+            "subtext": "\u603b\u65f6\u957f: 0h8min38s\uff0c\u603b\u5f39\u5e55\u6570\u91cf: 471\uff0c\u6bcf\u5206\u949f\u5e73\u5747: 54.56",
+            "padding": 5,
+            "itemGap": 10
+        }
+    ],
+    "dataZoom": [
+        {
+            "show": true,
+            "type": "slider",
+            "realtime": true,
+            "start": 0,
+            "end": 100,
+            "orient": "horizontal",
+            "zoomLock": false,
+            "filterMode": "filter"
+        },
+        {
+            "show": true,
+            "type": "inside",
+            "realtime": true,
+            "start": 0,
+            "end": 100,
+            "orient": "horizontal",
+            "zoomLock": false,
+            "filterMode": "filter"
+        }
+    ],
+    "grid": [
+        {
+            "show": false,
+            "zlevel": 0,
+            "z": 2,
+            "left": "4%",
+            "right": "4%",
+            "containLabel": false,
+            "backgroundColor": "transparent",
+            "borderColor": "#ccc",
+            "borderWidth": 1
+        }
+    ]
+};
+        chart_a70ec8b8394b41309d6dbbbed4f9f6b9.setOption(option_a70ec8b8394b41309d6dbbbed4f9f6b9);
+    </script>
+  </body>
+</html>
