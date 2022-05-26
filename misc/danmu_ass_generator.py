@@ -63,6 +63,13 @@ def main():
         input("按回车键退出"); exit()
     try:
         file_path = sys.argv[1]
+        if file_path == '':
+            # 输入空文件时，默认转码data文件夹内的最近更新文件
+            for t_files in os.walk('../data'):
+                t_files = t_files[2]; break
+            if len(t_files) > 0:
+                t_files.sort(key = lambda x:os.stat(f'../data/{x}').st_mtime, reverse = True)
+                file_path = os.path.abspath(os.path.join('../data', t_files[0]))
         if file_path[-4:] != '.txt':
             file_path += '.txt'
         file_path = os.path.abspath(file_path)
