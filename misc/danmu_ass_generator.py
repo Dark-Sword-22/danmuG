@@ -68,8 +68,13 @@ def main():
             for t_files in os.walk('../data'):
                 t_files = t_files[2]; break
             if len(t_files) > 0:
-                t_files.sort(key = lambda x:os.stat(f'../data/{x}').st_mtime, reverse = True)
-                file_path = os.path.abspath(os.path.join('../data', t_files[0]))
+                t_files.sort(key = lambda x:os.stat(f'../data/{x}').st_mtime)
+                while t_files:
+                    last = t_files.pop()
+                    if os.path.splitext(last)[1] == '.txt':
+                        file_path = os.path.abspath(os.path.join('../data', os.path.split(last)[1]))
+                        break
+
         if file_path[-4:] != '.txt':
             file_path += '.txt'
         file_path = os.path.abspath(file_path)
