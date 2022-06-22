@@ -38,6 +38,7 @@
 
 ### Upd
 
+- 22.06.22 由于服务器上gh登录权限莫名丢失，导致2022.06.19-06.21弹幕数据未能正常同步，该部分数据已被覆盖不太可能找回。 
 - 22.05.02 更新弹幕[生成工具](https://github.com/Dark-Sword-22/danmuG/blob/main/misc/%E5%BC%B9%E5%B9%95%E7%94%9F%E6%88%90%E5%B7%A5%E5%85%B7%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E.md)。
 - 22.04.20 更新扫码获取cookie的[网址](https://dark-sword-22.pages.dev/cookie-helper.html)。
 - 22.04.20 更新秦喵喵 \* 5。
