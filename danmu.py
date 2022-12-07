@@ -90,7 +90,7 @@ class Writer:
         )
         self._start_time = datetime.datetime.now()
         # UTC-TIME
-        self._file_name_time = f"{str(self._start_time + datetime.timedelta(seconds = 3600*8))[:19]}.{str(int(self._start_time.microsecond//1000)).zfill(3)}"
+        self._file_name_time = f"{str(self._start_time + datetime.timedelta(seconds = 3600*0))[:19]}.{str(int(self._start_time.microsecond//1000)).zfill(3)}"
         self.file_name = os.path.join(os.path.abspath('./data/'), f'danmu-{self._file_name_time.replace(":", "-").replace(" ","-").replace(".","-")}-{title}.txt')
         self.logger = logger
         self.last_update_time = time.time()
@@ -104,7 +104,7 @@ class Writer:
             current_time = datetime.datetime.now()
             time_diff = (current_time - self._start_time).total_seconds()
             time_diff = self.format_seconds(time_diff)
-            f.write(f"{str(current_time + datetime.timedelta(seconds = 3600*8))[:19]}.{str(int(current_time.microsecond // 1000)).zfill(3)} - {time_diff} - {words}\n")
+            f.write(f"{str(current_time + datetime.timedelta(seconds = 3600*0))[:19]}.{str(int(current_time.microsecond // 1000)).zfill(3)} - {time_diff} - {words}\n")
 
     def format_seconds(self, seconds: int) -> str:
         return f"{str(int(seconds // 3600)).zfill(2)}:{str(int((seconds%3600) // 60)).zfill(2)}:{str(int(seconds%60)).zfill(2)}"
@@ -667,7 +667,7 @@ class Fisherman:
         def wraper():
             try:
                 os.system("git add -A")
-                os.system(f'git commit -m "[{str(datetime.datetime.now() + datetime.timedelta(seconds = 8*3600))[:10]}] 弹幕更新"')
+                os.system(f'git commit -m "[{str(datetime.datetime.now() + datetime.timedelta(seconds = 0*3600))[:10]}] 弹幕更新"')
                 os.system("git push --force")
             except:
                 ...

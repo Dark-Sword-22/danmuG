@@ -202,7 +202,7 @@ class DAL:
                     await self.session.execute(stmt)
                 stmt = select(Contributors).where(Contributors.uname == wdcr).limit(1)
                 person = (await self.session.execute(stmt)).scalars().first()
-                _ctime = datetime.datetime.now() + datetime.timedelta(seconds=3600)
+                _ctime = datetime.datetime.now()# + datetime.timedelta(seconds=3600)
                 if person:
                     person.total_count += 1
                     person.total_chars += len(item.content)
@@ -271,7 +271,7 @@ class DAL:
     async def fetch_superman(self):
         res = await self.session.execute(select(Contributors).order_by(Contributors.total_count.desc()).limit(50))
         res = res.scalars().all()
-        return res | Map(lambda x: {"name": x.uname, "datetime": str(x.last_update_time + datetime.timedelta(seconds = 8*3600))[:19], "wordcount": x.total_chars}) | list
+        return res | Map(lambda x: {"name": x.uname, "datetime": str(x.last_update_time + datetime.timedelta(seconds = 0*3600))[:19], "wordcount": x.total_chars}) | list
 
     async def fetch_accomplishment_rate(self):
         def use_inspector(conn):
